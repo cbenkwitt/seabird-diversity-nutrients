@@ -1,0 +1,143 @@
+Species,Family,MaxSizeTL_MB18,Max_Size_MB19,Length_Max_TL_Chagos,MaxSizeTL_OG,MaxSizeTL,MaxSizeTL_Prod,Diet_MB18,Diet_MB19,Diet_Chagos,Diet_OG,Diet,Position_MB18,Position_MB19,Position_OG,Position,a_MB18,b_MB18,a_MB19,b_MB19,a_Chagos,b_Chagos,a_Bayes_Fishbase,b_Bayes_Fishbase,a,b
+Abudefduf sexfasciatus,Pomacentridae,NA,16,19,20,15,16,NA,Plktiv,Planktivore,Plktiv,Plktiv,NA,BtPlAs,BtPlDw,BtPlAs,NA,NA,0.024,3.06,0.0213,3.152,0.02138,3.04,0.02138,3.04
+Abudefduf sordidus,Pomacentridae,NA,NA,24,25,25,24,NA,NA,Omnivore,Omnivr,Omnivr,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0226,3.132,0.0195,3.03,0.0195,3.03
+Abudefduf vaigiensis,Pomacentridae,20,20,20,20,20,20,Planktivore,Plktiv,Planktivore,Plktiv,Plktiv,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01862,3.04,0.019,3.04,0.03,2.8,0.02455,3.01,0.02455,3.01
+Acanthurus leucosternon,Acanthuridae,54,NA,54,50,50,54,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.0195,2.94,NA,NA,0.0286,2.921,0.01905,2.94,0.01905,2.94
+Acanthurus lineatus,Acanthuridae,38,38,38,40,40,38,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.0195,3.03,0.021,3.01,0.0126,3.064,0.01778,2.97,0.01778,2.97
+Acanthurus mata,Acanthuridae,50,NA,50,50,50,50,Planktivore,NA,Planktivore,Plktiv,Plktiv,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.02291,2.97,NA,NA,0.0269,2.945,0.02512,2.94,0.02512,2.94
+Acanthurus nigricauda,Acanthuridae,40,40,40,40,40,40,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02188,2.96,0.028,2.94,0.0261,3.024,0.02089,2.95,0.02089,2.95
+Acanthurus nigrofuscus,Acanthuridae,21,21,21,20,20,21,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02344,2.97,0.027,3.02,0.0301,2.967,0.02089,2.96,0.02089,2.96
+Acanthurus tennentii,Acanthuridae,NA,NA,31,30,30,31,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.1317,2.392,0.01905,2.95,0.01905,2.95
+Acanthurus triostegus,Acanthuridae,27,NA,27,25,25,27,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.02188,2.96,NA,NA,0.1317,2.392,0.02042,2.96,0.02042,2.96
+Aethaloperca rogaa,Serranidae,NA,NA,60,60,60,60,NA,NA,Piscivore,FisCep,FisCep,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0398,2.761,0.01445,3.09,0.01445,3.09
+Amblyglyphidodon leucogaster,Pomacentridae,NA,13,13,15,15,13,NA,Omnivr,Planktivore,Plktiv,Plktiv,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.022,3.01,0.0217,3,0.01585,2.96,0.01585,2.96
+Anampses caeruleopunctatus,Labridae,NA,42,42,40,40,42,NA,InvMob,Invertivore,InvMob,InvMob,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.01,3.06,0.022609401,2.792711024,0.01072,3.04,0.01072,3.04
+Anampses meleagrides,Labridae,NA,22,22,20,20,22,NA,InvMob,Invertivore,InvMob,InvMob,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.01,3.06,0.0226,2.793,0.01072,3.04,0.01072,3.04
+Aphareus furca,Lutjanidae,NA,NA,70,70,70,70,NA,NA,Piscivore,FisCep,FisCep,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0105,3,0.01585,2.94,0.01585,2.94
+Apolemichthys trimaculatus,Pomacanthidae,NA,NA,26,25,25,26,NA,NA,Invertivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0045,3,0.02512,2.9,0.02512,2.9
+Aprion virescens,Lutjanidae,112,112,112,120,120,112,Fish-cephalopod feeder,FisCep,Piscivore,FisCep,FisCep,Pelagic Reef dwelling,PelgAs,PelgDw,PelgAs,0.01349,2.95,0.0125,3.03,0.0255,2.87,0.01445,2.94,0.01445,2.94
+Arothron meleagris,Tetraodontidae,NA,NA,50,50,50,50,NA,NA,Corallivore,InvSes,InvSes,NA,NA,BtPlDw,BnthDw,NA,NA,NA,NA,0.057,2.801,0.03388,2.87,0.03388,2.87
+Arothron nigropunctatus,Tetraodontidae,NA,33,33,35,35,33,NA,InvSes,Corallivore,InvSes,InvSes,NA,BnthDw,BtPlDw,BnthDw,NA,NA,0.036,2.95,0.02138,2.87,0.02138,2.87,0.02138,2.87
+Balistapus undulatus,Balistidae,NA,30,30,30,30,30,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BnthDw,BtPlDw,NA,NA,0.03,3.06,0.0058,3.554,0.03467,3,0.03467,3
+Balistoides viridescens,Balistidae,NA,75,75,80,80,75,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BnthDw,BtPlDw,NA,NA,0.029,3.02,0.02442,3.01828,0.03236,2.97,0.03236,2.97
+Calotomus carolinus,Scaridae,NA,NA,54,50,50,54,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0122,3.167,0.0123,3.13,0.0123,3.13
+Cantherhines pardalis,Monacanthidae,NA,NA,25,25,25,25,NA,NA,Invertivore,Omnivr,Omnivr,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.017,3.07,0.01698,2.91,0.01698,2.91
+Carangoides ferdau,Carangidae,70,NA,70,70,70,70,Fish-cephalopod feeder,NA,Piscivore,FisCep,FisCep,Pelagic Reef associated,NA,PelgAs,PelgAs,0.0228,3,NA,NA,0.036825665,2.851155431,0.01905,2.95,0.01905,2.95
+Caranx melampygus,Carangidae,126.9,126.2,126,120,120,126,Fish-cephalopod feeder,FisCep,Piscivore,FisCep,FisCep,Pelagic Reef associated,PelgAs,PelgAs,PelgAs,0.01905,2.95,0.021,3.01,0.0235,2.92,0.01738,2.95,0.01738,2.95
+Carcharhinus melanopterus,Carcharhinidae,NA,NA,200,200,200,200,NA,NA,Piscivore,FisCep,FisCep,NA,NA,PelgAs,PelgAs,NA,NA,NA,NA,0.000325,3.649,0.00468,3.04,0.00468,3.04
+Centropyge multispinis,Pomacanthidae,NA,NA,14,15,15,14,NA,NA,Invertivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.1313,2.26,0.0263,2.87,0.0263,2.87
+Cephalopholis argus,Serranidae,NA,NA,60,60,60,60,NA,FisCep,Piscivore,FisCep,FisCep,NA,BnthDw,BnthDw,BnthDw,NA,NA,NA,NA,0.0186,2.987,0.01175,3.04,0.01175,3.04
+Cephalopholis nigripinnis,Serranidae,NA,NA,28,30,30,28,NA,NA,Piscivore,FisCep,FisCep,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0282,2.81775,0.0123,3.04,0.0123,3.04
+Cephalopholis spiloparaea,Serranidae,NA,NA,30,30,30,30,NA,NA,Piscivore,FisCep,FisCep,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0273,3,0.01549,3.07,0.01549,3.07
+Cetoscarus bicolor,Scaridae,NA,NA,58,100,70,65,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.01567,3,0.01349,3.03,0.01349,3.03
+Chaetodon auriga,Chaetodontidae,23,23,23,25,25,23,Mobile invertebrate feeder,InvMob,Omnivore,InvMob,InvMob,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.02512,2.99,0.025,2.99,0.0312,2.953,0.02512,2.99,0.02512,2.99
+Chaetodon falcula,Chaetodontidae,NA,NA,20,20,20,20,NA,NA,Invertivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0229,3.148,0.02344,3.01,0.02344,3.01
+Chaetodon guttatissimus,Chaetodontidae,NA,NA,12,15,10,12,NA,NA,Omnivore,Omnivr,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0409,2.791,0.02344,3.01,0.02344,3.01
+Chaetodon kleinii,Chaetodontidae,NA,15,15,15,15,15,NA,InvSes,Omnivore,Omnivr,InvSes,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.028,3.03,0.0409,2.791,0.0302,3.04,0.0302,3.04
+Chaetodon meyeri,Chaetodontidae,NA,NA,20,20,20,20,NA,NA,Corallivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0229,3.148,0.02344,3.01,0.02344,3.01
+Chaetodon trifascialis,Chaetodontidae,18,NA,18,20,20,18,Sessile invertebrate feeder,NA,Corallivore,InvSes,InvSes,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.02089,2.96,NA,NA,0.0468,2.758,0.02138,2.96,0.02138,2.96
+Chaetodon trifasciatus,Chaetodontidae,15,NA,15,15,15,15,Sessile invertebrate feeder,NA,Corallivore,InvSes,InvSes,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.02344,3.06,NA,NA,0.0387,2.894,0.02344,3.06,0.02344,3.06
+Chaetodon xanthocephalus,Chaetodontidae,NA,NA,20,20,20,20,NA,NA,Omnivore,Omnivr,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0409,2.791,0.02344,3.01,0.02344,3.01
+Chaetodon zanzibarensis,Chaetodontidae,NA,NA,12,15,10,12,NA,NA,Corallivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0409,2.791,0.02344,3.01,0.02344,3.01
+Cheilinus fasciatus,Labridae,NA,48.2,52,50,50,52,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.017,3.05,0.021,2.972,0.01413,2.95,0.01413,2.95
+Cheilinus trilobatus,Labridae,45,45,45,50,50,45,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01514,3,0.017,3.05,0.021,2.972,0.01905,3,0.01905,3
+Chlorurus capistratoides,Scaridae,NA,NA,40,40,40,40,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0273,2.93,0.01413,3.04,0.01413,3.04
+Chlorurus enneacanthus,Scaridae,NA,NA,50,50,50,50,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0273,2.93,0.01413,3.04,0.01413,3.04
+Chlorurus sordidus,Scaridae,NA,NA,40,40,40,40,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0273,2.93,0.01549,3.06,0.01549,3.06
+Chlorurus strongylocephalus,Scaridae,NA,NA,70,70,70,70,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0273,2.93,0.01413,3.04,0.01413,3.04
+Chromis atripectoralis,Pomacentridae,NA,12,12,15,10,12,NA,Plktiv,Planktivore,Plktiv,Plktiv,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.017,3.13,0.0204,3.217,0.02042,3.07,0.02042,3.07
+Chromis dimidiata,Pomacentridae,NA,NA,9,10,10,9,NA,NA,Planktivore,Plktiv,Plktiv,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0642,2.518,0.01698,3,0.01698,3
+Chromis viridis,Pomacentridae,8,8,10,10,10,10,Planktivore,Plktiv,Planktivore,Plktiv,Plktiv,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.018,2.97,0.017,3.13,0.0642,2.518,0.01995,2.9,0.01995,2.9
+Chromis weberi,Pomacentridae,NA,13.5,14,15,15,14,NA,Plktiv,Planktivore,Plktiv,Plktiv,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.017,3.13,0.0204,3.217,,,0.017,3.13
+Chrysiptera brownriggii,Pomacentridae,NA,NA,8,10,8,8,NA,NA,Omnivore,Omnivr,Omnivr,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0377,2.702,0.01479,2.99,0.01479,2.99
+Cirrhitichthys oxycephalus,Cirrhitidae,NA,10,10,10,10,10,NA,FisCep,Invertivore,InvMob,InvMob,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.013,3.06,0.0138,3.117,0.01413,3.02,0.01413,3.02
+Ctenochaetus binotatus,Acanthuridae,NA,22,22,20,20,22,NA,HerDet,Herbivore,HerDet,HerDet,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.034,2.96,0.081,2.59,0.03236,2.94,0.03236,2.94
+Ctenochaetus striatus,Acanthuridae,26,26,26,25,25,26,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02239,2.98,0.023,3.04,0.0254,3.027,0.02042,2.97,0.02042,2.97
+Ctenochaetus truncatus,Acanthuridae,NA,NA,16,15,15,16,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.081,2.59,0.02042,2.96,0.02042,2.96
+Dascyllus aruanus,Pomacentridae,10,NA,10,10,10,10,Planktivore,NA,Omnivore,Plktiv,Plktiv,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.02188,2.98,NA,NA,0.0415,2.989,0.02884,2.97,0.02884,2.97
+Epibulus insidiator,Labridae,NA,68.5,71,70,70,71,NA,FisCep,Piscivore,FisCep,FisCep,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.019,3.04,0.01614,3.08102,0.01905,2.97,0.01905,2.97
+Epinephelus fuscoguttatus,Serranidae,NA,NA,120,120,120,120,Fish-cephalopod feeder,NA,Piscivore,FisCep,FisCep,Benthic Reef dwelling,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0126,3.066,0.01047,3.03,0.01047,3.03
+Epinephelus merra,Serranidae,NA,NA,32,30,30,32,Fish-cephalopod feeder,InvMob,Piscivore,FisCep,FisCep,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,NA,NA,NA,NA,0.0236,2.824,0.01175,3.04,0.01175,3.04
+Gomphosus caeruleus,Labridae,NA,NA,32,30,30,32,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.02437,2.70269,0.00955,3.03,0.00955,3.03
+Halichoeres cosmetus,Labridae,NA,NA,13,15,15,13,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0175,2.957,0.01047,3.06,0.01047,3.06
+Halichoeres hortulanus,Labridae,27,27,27,25,25,27,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.00955,3.07,0.012,3.05,0.0119,3.064,0.01096,3.05,0.01096,3.05
+Halichoeres marginatus,Labridae,18,18,18,20,20,18,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01047,3.14,0.011,3.1,0.0053,3.414,0.01122,3.10,0.01122,3.10
+Halichoeres scapularis,Labridae,20,NA,20,20,20,20,Mobile invertebrate feeder,NA,Invertivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.01023,3.13,NA,NA,0.00524,3.382,0.01072,3.11,0.01072,3.11
+Hemigymnus fasciatus,Labridae,NA,80,30,30,50,50,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.014,3.04,0.02423,2.92262,0.01122,3.04,0.01122,3.04
+Hemigymnus melapterus,Labridae,NA,90,44,40,60,60,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.014,3.04,0.024234431,2.922617847,0.01259,3.04,0.01259,3.04
+Heniochus monoceros,Chaetodontidae,NA,NA,24,25,25,24,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.022,3.125,0.01905,3.06,0.01905,3.06
+Hipposcarus harid,Scaridae,NA,NA,75,80,80,75,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.01595,3,0.01349,3.03,0.01349,3.03
+Kyphosus cinerascens,Kyphosidae,50,NA,55,60,50,50,Herbivore-macroalgae feeder,NA,Herbivore,HerMac,HerMac,Pelagic Reef dwelling,NA,PelgDw,PelgDw,0.01778,3.01,NA,NA,0.0129,3.151,0.01549,3.02,0.01549,3.02
+Labrichthys unilineatus,Labridae,NA,17.5,18,20,20,18,NA,InvSes,Corallivore,InvSes,InvSes,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.01,3.05,0.01503,3,0.01096,3.05,0.01096,3.05
+Labroides bicolor,Labridae,NA,NA,15,15,15,15,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0076,3.105,0.00468,3.12,0.00468,3.12
+Labroides dimidiatus,Labridae,NA,14,14,15,15,14,NA,InvMob,Invertivore,InvMob,InvMob,NA,BnthDw,BtPlDw,BtPlDw,NA,NA,0.0116,3.16,0.0076,3.105,0.00603,3.16,0.00603,3.16
+Lethrinus erythracanthus,Lethrinidae,70,NA,70,70,70,70,Mobile invertebrate feeder,NA,Invertivore,InvMob,InvMob,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.01445,2.98,NA,NA,0.0239,3.011,0.01202,2.99,0.01202,2.99
+Lutjanus bohar,Lutjanidae,90,90,90,100,100,90,Fish-cephalopod feeder,FisCep,Piscivore,FisCep,FisCep,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.0123,3,0.014,3.07,0.017,3.035,0.01259,3,0.01259,3
+Lutjanus gibbus,Lutjanidae,50,50,50,50,50,50,Mobile invertebrate feeder,InvMob,Piscivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01549,2.95,0.017,3.03,0.0153,3.091,0.01514,2.98,0.01514,2.98
+Lutjanus kasmira,Lutjanidae,40,NA,40,40,40,40,Mobile invertebrate feeder,NA,Piscivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.01349,3.04,NA,NA,0.0117,3.136,0.01479,2.98,0.01479,2.98
+Lutjanus monostigma,Lutjanidae,60,60,60,60,60,60,Fish-cephalopod feeder,FisCep,Piscivore,FisCep,FisCep,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01349,2.96,0.014,3.03,0.0184,2.97,0.0138,2.96,0.0138,2.96
+Macolor niger,Lutjanidae,NA,75,75,80,80,75,NA,FisCep,Piscivore,FisCep,FisCep,NA,PelgAs,PelgDw,PelgAs,NA,NA,0.014,3.04,0.01453,3,0.01585,2.98,0.01585,2.98
+Melichthys indicus,Balistidae,NA,NA,25,25,25,25,NA,NA,Invertivore,InvMob,InvMob,NA,NA,PelgDw,BtPlDw,NA,NA,NA,NA,0.0058,3.554,0.0257,2.94,0.0257,2.94
+Monotaxis grandoculis,Lethrinidae,NA,60,60,60,60,60,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BnthDw,BtPlDw,NA,NA,0.024,3,0.0239,3.011,0.02291,2.99,0.02291,2.99
+Mulloidichthys flavolineatus,Mullidae,43,43,43,40,40,43,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.00891,3.08,0.014,3.04,0.011973899,3.101092515,0.01072,3.08,0.01072,3.08
+Myripristis vittata,Holocentridae,NA,NA,25,25,25,25,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0206,3.151,0.01698,3.05,0.01698,3.05
+Naso annulatus,Acanthuridae,100,100,100,100,100,100,Planktivore,Omnivr,Planktivore,Plktiv,Plktiv,Pelagic Reef dwelling,PelgDw,PelgDw,PelgDw,0.02455,2.95,0.0167,3.01,0.051032424,2.715369535,0.02239,2.98,0.02239,2.98
+Naso brachycentron,Acanthuridae,105.1,105.1,105,100,100,105,Herbivore-macroalgae feeder,HerMac,Herbivore,HerMac,HerMac,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02188,2.97,0.01995,3,0.0216,2.988,0.01995,3,0.01995,3
+Naso hexacanthus,Acanthuridae,79.2,79.2,79,80,80,79,Planktivore,Plktiv,Planktivore,Plktiv,Plktiv,Bentho-pelagic Reef dwelling,PelgDw,BtPlDw,PelgDw,0.02344,2.96,0.0172,3.03,0.0424,2.854,0.02188,2.99,0.02188,2.99
+Naso lituratus,Acanthuridae,60,60,59,60,60,60,Herbivore-macroalgae feeder,HerMac,Herbivore,HerMac,HerMac,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.0257,2.95,0.0226,3.01,0.0136,3.128,0.02512,2.97,0.02512,2.97
+Naso unicornis,Acanthuridae,73.6,73.6,78,80,70,74,Herbivore-macroalgae feeder,HerMac,Herbivore,HerMac,HerMac,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02188,2.94,0.0229,3,0.0216,2.988,0.02344,2.95,0.02344,2.95
+Naso vlamingii,Acanthuridae,60,NA,60,60,60,60,Planktivore,NA,Planktivore,Plktiv,Plktiv,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,0.02818,2.98,NA,NA,0.0525,2.843,0.0263,3.01,0.0263,3.01
+Ostracion meleagris,Ostraciidae,NA,35,25,25,25,25,NA,InvSes,Omnivore,Omnivr,InvSes,NA,BtPlDw,BnthDw,BtPlDw,NA,NA,0.0357,2.91,0.1012,2.588,0.03548,2.81,0.03548,2.81
+Oxycheilinus digramma,Labridae,NA,48.1,48,50,50,48,NA,FisCep,Piscivore,FisCep,FisCep,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.0162,3.04,0.02,2.83,0.01905,2.95,0.01905,2.95
+Oxymonacanthus longirostris,Monacanthidae,NA,NA,12,15,10,12,NA,NA,Corallivore,InvSes,InvSes,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.01319,3,0.0182,2.9,0.0182,2.9
+Paracirrhites arcatus,Cirrhitidae,14,NA,20,20,15,14,Mobile invertebrate feeder,NA,Invertivore,InvMob,InvMob,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.00912,3.07,NA,NA,0.0172,2.977,0.01122,3.07,0.01122,3.07
+Paracirrhites forsteri,Cirrhitidae,NA,22,22,20,20,22,NA,FisCep,Piscivore,FisCep,FisCep,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.00933,3.08,0.0172,2.977,0.01122,3.07,0.01122,3.07
+Parapercis millepunctata,Pinguipedidae,NA,NA,18,20,20,18,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthAs,BnthAs,NA,NA,NA,NA,0.0143,2.95,0.00646,3.09,0.00646,3.09
+Parupeneus barberinus,Mullidae,60,60,60,60,60,60,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.0138,3.02,0.014,3.02,0.0151,3.078,0.01122,3.07,0.01122,3.07
+Parupeneus bifasciatus,Mullidae,NA,NA,35,35,35,35,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0075,3.205,0.00794,3.18,0.00794,3.18
+Parupeneus cyclostomus,Mullidae,NA,50,50,50,50,50,NA,FisCep,Piscivore,FisCep,FisCep,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.0125,3.06,0.0052,3.381,0.01072,3.08,0.01072,3.08
+Parupeneus macronemus,Mullidae,40,NA,40,40,40,40,Mobile invertebrate feeder,NA,Invertivore,InvMob,InvMob,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.00967,3.12,NA,NA,0.0052,3.381,0.00933,3.14,0.00933,3.14
+Parupeneus trifasciatus,Mullidae,NA,NA,35,35,35,35,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.00323,3.48,0.00794,3.18,0.00794,3.18
+Platax orbicularis,Ephippidae,NA,50,60,60,50,50,NA,Omnivr,Invertivore,InvMob,Omnivr,NA,BtPlAs,BtPlAs,BtPlAs,NA,NA,0.0264,3.02,0.0425,2.975,0.02951,2.97,0.02951,2.97
+Plectorhinchus orientalis,Haemulidae,NA,NA,81,80,80,81,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0144,3.03,0.01349,3.01,0.01349,3.01
+Plectroglyphidodon dickii,Pomacentridae,11,11,11,10,10,11,Omnivore,Omnivr,Omnivore,Omnivr,Omnivr,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.02344,2.99,0.0222,3.01,0.0612,2.635,0.02239,2.99,0.02239,2.99
+Plectroglyphidodon johnstonianus,Pomacentridae,NA,NA,14,15,15,14,NA,NA,Omnivore,Omnivr,Omnivr,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0612,2.635,0.02291,2.96,0.02291,2.96
+Plectroglyphidodon lacrymatus,Pomacentridae,NA,10,10,10,10,10,NA,Omnivr,Herbivore,HerDet,Omnivr,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.0222,3.01,0.0612,2.635,0.02089,2.99,0.02089,2.99
+Plectropomus areolatus,Serranidae,NA,NA,80,80,80,80,Fish-cephalopod feeder,NA,Piscivore,FisCep,FisCep,Benthic Reef dwelling,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0119,3.057,0.01122,3.04,0.01122,3.04
+Plectropomus laevis,Serranidae,NA,NA,125,120,120,125,Fish-cephalopod feeder,NA,Piscivore,FisCep,FisCep,Benthic Reef dwelling,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.00591,3.23774,0.00977,3.06,0.00977,3.06
+Pomacanthus imperator,Pomacanthidae,NA,NA,47,50,50,47,NA,NA,Invertivore,InvSes,InvSes,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.02758,3,0.03467,2.92,0.03467,2.92
+Pomacentrus caeruleus,Pomacentridae,NA,NA,10,10,10,10,NA,NA,Omnivore,Omnivr,Omnivr,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.3651,2.775,0.01514,2.95,0.01514,2.95
+Pomacentrus indicus,Pomacentridae,NA,NA,11,10,10,11,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.3651,2.775,0.02291,2.99,0.02291,2.99
+Pomacentrus taeniometopon,Pomacentridae,NA,NA,12,15,10,12,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.028,3.024,0.02291,2.99,0.02291,2.99
+Pomacentrus wardi,Pomacentridae,9.9,9.9,10,10,10,10,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.02344,2.99,0.023,2.99,0.028,3.024,,,0.02344,2.99
+Pseudocheilinus hexataenia,Labridae,NA,10,10,10,10,10,NA,InvMob,Invertivore,InvMob,InvMob,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.0118,3.05,0.0167,3,0.01380,2.96,0.01380,2.96
+Pygoplites diacanthus,Pomacanthidae,NA,30.9,31,30,30,31,NA,InvSes,Invertivore,InvSes,InvSes,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.0247,3.01,0.02762,3,0.01995,2.9,0.01995,2.9
+Sargocentron spiniferum,Holocentridae,NA,53.8,54,50,50,54,NA,InvMob,Invertivore,InvMob,InvMob,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.0168,3.07,0.0236,2.981,0.01698,3,0.01698,3
+Scarus caudofasciatus,Scaridae,NA,NA,50,50,50,50,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.01445,3.04,0.01445,3.04
+Scarus falcipinnis,Scaridae,NA,NA,60,60,60,60,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0279,3.06,0.01445,3.04,0.01445,3.04
+Scarus frenatus,Scaridae,NA,NA,47,50,50,47,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0279,3.06,0.02138,3.09,0.02138,3.09
+Scarus ghobban,Scaridae,NA,NA,75,100,80,75,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0169,3.049,0.01445,3.04,0.01445,3.04
+Scarus globiceps,Scaridae,NA,NA,45,50,50,45,NA,HerDet,Herbivore,HerDet,HerDet,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.01047,3.09,0.01047,3.09
+Scarus niger,Scaridae,NA,NA,40,40,40,40,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0142,3.14,0.01549,3.11,0.01549,3.11
+Scarus prasiognathos,Scaridae,NA,NA,70,70,70,70,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.01122,3.08,0.01122,3.08
+Scarus psittacus,Scaridae,NA,NA,34,35,35,35,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.01585,3.05,0.01585,3.05
+Scarus rubroviolaceus,Scaridae,NA,NA,70,70,70,70,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0273,2.93,0.01318,3.09,0.01318,3.09
+Scarus scaber,Scaridae,NA,NA,37,35,35,37,Herbivore-detritivore,NA,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.0138,3.01,0.0138,3.01
+Scarus tricolor,Scaridae,NA,NA,37,35,35,37,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0222,2.982,0.01778,3.08,0.01778,3.08
+Siganus argenteus,Siganidae,40,40,40,40,40,40,Herbivore-macroalgae feeder,HerDet,Herbivore,HerMac,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.01413,3,0.0144,3.08,0.0131,3.088,0.01479,2.99,0.01479,2.99
+Stegastes fasciolatus,Pomacentridae,NA,15,17,20,15,16,NA,HerDet,Herbivore,HerDet,HerDet,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.0251,3.04,0.1681,2.367,,,0.0251,3.04
+Stegastes gascoynei,Pomacentridae,NA,NA,15,15,15,15,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0395,2.989,0.0195,2.99,0.0195,2.99
+Stegastes lividus,Pomacentridae,NA,NA,11,10,10,11,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0652,2.741,,,0.0195,2.99
+Stegastes nigricans,Pomacentridae,14,14,14,15,15,14,Herbivore-detritivore,Omnivr,Herbivore,HerDet,Omnivr,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.02512,3.02,0.0251,3.04,0.1681,2.367,0.02455,3.02,0.02455,3.02
+Stethojulis albovittata,Labridae,14,NA,14,15,15,14,Mobile invertebrate feeder,NA,Invertivore,InvMob,InvMob,Benthic Reef dwelling,NA,BnthDw,BnthDw,0.01,3.06,NA,NA,0.0128,3.077,0.01072,3.05,0.01072,3.05
+Stethojulis strigiventer,Labridae,NA,15,15,15,15,15,NA,InvMob,Invertivore,InvMob,InvMob,NA,BnthDw,BnthDw,BnthDw,NA,NA,0.0129,3.05,0.019083913,2.876257644,0.00891,2.98,0.00891,2.98
+Sufflamen chrysopterus,Balistidae,NA,NA,30,30,30,30,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BtPlDw,NA,NA,NA,NA,0.031,2.95,0.01995,2.95,0.01995,2.95
+Thalassoma amblycephalum,Labridae,NA,20.3,20,20,20,20,NA,Plktiv,Planktivore,Plktiv,Plktiv,NA,BtPlDw,BtPlDw,BtPlDw,NA,NA,0.0128,3.06,0.0238,2.749,0.00977,3.01,0.00977,3.01
+Thalassoma hardwicke,Labridae,20,20,20,20,20,20,Mobile invertebrate feeder,InvMob,Invertivore,InvMob,InvMob,Benthic Reef dwelling,BnthDw,BnthDw,BnthDw,0.00977,3.05,0.0128,3.06,0.0139,3.048,0.01023,3.04,0.01023,3.04
+Thalassoma hebraicum,Labridae,NA,NA,23,25,25,23,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0238,2.749,0.01288,3.05,0.01288,3.05
+Thalassoma purpureum,Labridae,NA,NA,46,50,50,46,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.0123,3.077,0.01318,3.05,0.01318,3.05
+Thalassoma quinquevittatum,Labridae,NA,NA,17,20,15,17,NA,NA,Invertivore,InvMob,InvMob,NA,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.01386619,3,0.01,3.02,0.01,3.02
+Variola louti,Serranidae,NA,NA,83,80,80,83,Fish-cephalopod feeder,NA,Piscivore,FisCep,FisCep,Benthic Reef dwelling,NA,BnthDw,BnthDw,NA,NA,NA,NA,0.012,3.081,0.01096,3.03,0.01096,3.03
+Zanclus cornutus,Zanclidae,NA,23,23,25,25,23,NA,InvSes,Invertivore,InvSes,InvSes,NA,BnthDw,BtPlDw,BnthDw,NA,NA,0.021,3.11,0.0147,3.36991,0.01698,3.06,0.01698,3.06
+Zebrasoma desjardinii,Acanthuridae,NA,NA,40,40,40,40,NA,NA,Herbivore,HerDet,HerDet,NA,NA,BtPlDw,BtPlDw,NA,NA,NA,NA,0.0304,2.957,0.02042,2.96,0.02042,2.96
+Zebrasoma scopas,Acanthuridae,23.3,25,48,25,25,25,Herbivore-detritivore,HerDet,Herbivore,HerDet,HerDet,Bentho-pelagic Reef dwelling,BtPlDw,BtPlDw,BtPlDw,0.02399,2.99,0.0275,3.03,0.0304,2.957,0.02138,2.98,0.02138,2.98

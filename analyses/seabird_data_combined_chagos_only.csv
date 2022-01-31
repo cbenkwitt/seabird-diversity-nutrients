@@ -1,0 +1,13 @@
+Region,Atoll,Island,rat_status,island_size_ha,Ardenna pacifica,Puffinus bailloni,Phaethon lepturus,Sula sula,Sula leucogaster,Fregata minor,Fregata ariel,Thalasseus bergii,Sterna dougallii ,Sterna sumatrana ,Onychoprion anaethetus,Onychoprion fuscatus,Anous stolidus,Anous tenuirostris,Gygis alba
+Chagos Archipelago,GCB,Eagle Island,infested,265.4,0,0,1,10,0,0,0,0,0,0,0,0,40,10,20
+Chagos Archipelago,PB,Grande Ile Coquillage,absent,21.8,0,10,0,750,0,80,5,23,0,0,2,38000,125,1500,30
+Chagos Archipelago,PB,Grande Ile Mapou,infested,19.5,0,0,0,10,0,0,0,0,0,0,0,0,10,15,10
+Chagos Archipelago,PB,Ile Anglaise_PB,infested,12,0,0,0,0,0,0,0,0,0,0,0,0,20,0,20
+Chagos Archipelago,SAL,Ile Anglaise_SAL,infested,71.6,0,0,0,0,0,0,0,0,0,1,0,0,20,10,15
+Chagos Archipelago,SAL,Ile de la Passe,absent,27.5,0,0,2,27,4,0,0,0,0,0,0,0,40,400,25
+Chagos Archipelago,SAL,Ile Fouquet,infested,45.4,0,0,1,17,0,0,0,0,3,53,0,0,25,0,10
+Chagos Archipelago,PB,Ile Longue,absent,21.6,0,0,0,490,3,0,0,0,0,0,0,48000,140,1100,25
+Chagos Archipelago,PB,Ile Poule,infested,108,0,0,1,0,0,0,0,0,3,2,0,0,8,0,2
+Chagos Archipelago,GCB,Middle Brother,absent,8,0,0,0,77,0,10,0,40,0,8,0,32000,80,25,35
+Chagos Archipelago,GCB,Nelson's Island,absent,29,32,5,0,3300,25,250,50,0,0,0,9,0,650,12000,25
+Chagos Archipelago,GCB,South Brother,absent,23,300,400,0,105,0,0,0,40,0,0,2,10000,55,11500,30

@@ -1,0 +1,558 @@
+---
+title: "Fish biomass"
+author: "CEB"
+date: "01/18/2022"
+output: html_document
+---
+
+
+###load fish uvc and seabird data
+```{r}
+
+##fish data:
+load("fish_data.Rdata")
+##files: 
+##fish data non-aggregated (each row = 1 individual)
+#fish_dat_raw
+
+##fish data summed by transect: 
+#fish_bio_trans
+
+#fish data with seabird data
+#ch_2015_div_fish
+#ch_2015_div_fish_R1
+#ch_2015_div_fish_R2
+#ch_2015_div_fish_R3
+
+
+str(ch_2015_div_fish)
+
+ch_2015_div_fish_cs<-
+  ch_2015_div_fish %>%
+  mutate(logbio_fish = log(sum_fish_bio_kg_ha),
+        coral_cs = scale(Coral_cover, center = TRUE, scale = TRUE),
+         structure_cs = scale(Structure, center = TRUE, scale = TRUE),
+         coral_c = scale(Coral_cover, center = TRUE, scale = FALSE),
+         structure_c = scale(Structure, center = TRUE, scale = FALSE))
+
+range(ch_2015_div_fish_cs$logbio_fish)
+
+```
+
+
+##quick plots
+```{r}
+
+ch_2015_div_fish %>%
+  ggplot(aes(x = log_bio_kg_ha, y = sum_fish_bio_kg_ha, colour = richness)) + #
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = FALSE, alpha = FALSE) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+ch_2015_bio_div_fish_15 %>%
+  ggplot(aes(x = richness, y = sum_fish_bio_kg_ha, colour = log_bio_kg_ha)) + #
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+    theme_bw()+
+    guides(size = FALSE, alpha = FALSE) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+###looks like positive trends, also do log(fish biomass):
+range(ch_2015_div_fish$sum_fish_bio_kg_ha) #47.56961 1481.90554
+
+ch_2015_div_fish %>%
+  ggplot(aes(x = log_bio_kg_ha, y = log(sum_fish_bio_kg_ha), colour = richness)) + #
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = FALSE, alpha = FALSE) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+ch_2015_div_fish %>%
+  ggplot(aes(x = richness, y = log(sum_fish_bio_kg_ha), colour = log_bio_kg_ha)) + #
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+    theme_bw()+
+    guides(size = FALSE, alpha = FALSE) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+##looks like should use log(fish bio) as response
+
+```
+
+
+
+#####-------------------total fish biomass - LMER MODELS CHECKING FOR VIF'S----------------
+```{r}
+
+##check VIF on lmer's, as per: https://discourse.mc-stan.org/t/alternative-to-car-vif-for-brmsfit-models/3970
+
+all_fish_2015_lmer<-lmer(sum_fish_bio_kg_ha ~ rich_cs + logbio_cs + structure_cs + coral_cs  + (1|Island), data = ch_2015_div_fish_cs)
+vif(all_fish_2015_lmer) #     rich_cs    logbio_cs structure_cs     coral_cs 
+                     #   2.724690     2.496210     1.273597     1.080476 
+plot(all_fish_2015_lmer) ##looks a bit funnel-shaped - so try log
+
+
+all_fish_log_2015_lmer<-lmer(logbio_fish ~ rich_cs + logbio_cs + structure_cs + coral_cs  + (1|Island), data = ch_2015_div_fish_cs)
+vif(all_fish_log_2015_lmer) #     rich_cs    logbio_cs structure_cs     coral_cs 
+                            # 2.725306     2.496306     1.274196     1.080632 
+plot(all_fish_log_2015_lmer) ##looks good
+
+```
+
+
+
+###------------------bayesian models - total fish biomass------------------------
+```{r}
+
+######model w/ structure and coral cover-----------------------------------------------------------------
+ 
+fish_sb_mod_cs<- brm(
+ logbio_fish~rich_cs + logbio_cs + coral_cs + structure_cs +  (1|Island),
+  data = ch_2015_div_fish_cs, 
+  iter = 3000, warmup = 1000, chains = 4, cores = 4,
+  control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix 1 og divergent transition
+ #  sample_prior="yes",
+      file = "fish_sb_mod_cs") 
+print(fish_sb_mod_cs) 
+
+
+#diagnostics:
+plot(fish_sb_mod_cs, ask = FALSE)
+pp_check(fish_sb_mod_cs)
+##diagnostics look fine 
+
+hypothesis(fish_sb_mod_cs, c("rich_cs>0", "logbio_cs>0", "structure_cs>0", "coral_cs>0"))
+
+
+##pull out median hdis:
+sb_fish_biomass_posterior_est_cs<-
+fish_sb_mod_cs%>%
+  gather_draws(b_rich_cs, b_logbio_cs, 
+               b_coral_cs, b_structure_cs
+               ) %>%
+  median_hdi(.width=c(.5,.95))
+sb_fish_biomass_posterior_est_cs
+
+####re-run with centered, not scaled-----
+fish_sb_mod_c<- brm(
+ logbio_fish~rich_c + logbio_c + coral_c + structure_c +  (1|Island),
+  data = ch_2015_div_fish_cs, 
+  iter = 3000, warmup = 1000, chains = 4, cores = 4,
+  control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix 1 og divergent transition
+  # sample_prior="yes",
+      file = "fish_sb_mod_c") 
+print(fish_sb_mod_c) 
+
+
+#diagnostics:
+plot(fish_sb_mod_c, ask = FALSE)
+pp_check(fish_sb_mod_c)
+##diagnostics look fine 
+
+
+##pull out median hdis:
+sb_fish_biomass_posterior_est_c<-
+fish_sb_mod_c%>%
+  gather_draws(b_rich_c, b_logbio_c, 
+               b_coral_c, b_structure_c
+               ) %>%
+  median_hdi(.width=c(.5,.95))
+sb_fish_biomass_posterior_est_c
+
+#backtransform for each doubling of seabird biomass:
+2^0.101
+2^0.000510
+2^0.207
+
+range(ch_2015_div_fish_cs$structure_cs)
+range(ch_2015_div_fish_cs$logbio_cs)
+range(ch_2015_div_fish_cs$coral_cs)
+
+```
+
+
+##repeat with reduced seabird data (eliminated rare species)
+```{r}
+
+ch_2015_div_fish_cs_R3<-
+  ch_2015_div_fish_R3 %>%
+  mutate(logbio_fish = log(sum_fish_bio_kg_ha),
+        coral_cs = scale(Coral_cover, center = TRUE, scale = TRUE),
+         structure_cs = scale(Structure, center = TRUE, scale = TRUE),
+         coral_c = scale(Coral_cover, center = TRUE, scale = FALSE),
+         structure_c = scale(Structure, center = TRUE, scale = FALSE))
+
+
+##check vifs------
+all_fish_log_2015_lmer<-lmer(logbio_fish ~ rich_cs + logbio_cs + structure_cs + coral_cs  + (1|Island), data = ch_2015_div_fish_cs_R3)
+vif(all_fish_log_2015_lmer) #      rich_cs    logbio_cs structure_cs     coral_cs 
+ #   4.348657     3.943938     1.247515     1.084098 
+#okay
+
+
+###run bayesian model, centered scaled----------
+fish_sb_mod_cs_R3<- brm(
+ logbio_fish~rich_cs + logbio_cs + coral_cs + structure_cs +  (1|Island),
+  data = ch_2015_div_fish_cs_R3, 
+  iter = 3000, warmup = 1000, chains = 4, cores = 4,
+  control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix 1 og divergent transition
+ #  sample_prior="yes",
+      file = "fish_sb_mod_cs_R3") 
+print(fish_sb_mod_cs_R3) 
+
+
+#diagnostics:
+plot(fish_sb_mod_cs_R3, ask = FALSE)
+pp_check(fish_sb_mod_cs_R3)
+##diagnostics look fine 
+
+(hypothesis(fish_sb_mod_cs_R3, c("rich_cs>0", "logbio_cs>0", "structure_cs>0", "coral_cs>0")))
+#nearly identical to model with full data
+
+```
+
+
+
+####PLOTS - posterior distributions
+```{r}
+
+cols <- c("biomass" = "#0C7BDC", "richness" = "#FFC20A")
+
+sb_fish_post_plot<-
+ggplot(as_draws_df(fish_sb_mod_cs)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+##Points: 
+   stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+  theme_bw() + 
+  scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  guides(y = "none")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 14),
+          legend.position=c(0.86, 0.62), 
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+sb_fish_post_plot
+
+
+
+#look at one with all explan variables:
+cols2 <- c("biomass" = "#0C7BDC", "richness" = "#FFC20A", "structure" = "#201867", "coral" = "#ae004d")
+
+sb_fish_post_plot2<-
+ggplot(as_draws_df(fish_sb_mod_cs)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_structure_cs,  y = -.04,  fill= "structure", color= "structure"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_coral_cs,  y = -.05,  fill= "coral", color= "coral"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+##Points: 
+   stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+     stat_halfeye(aes(x = b_structure_cs,  y = -.04,  fill= "structure", color= "structure"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_coral_cs,  y = -.05,  fill= "coral", color= "coral"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+  theme_bw() + 
+  scale_fill_manual(values = cols2, name = "")+
+    scale_colour_manual(values = cols2, name = "")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 14),
+          legend.position=c(0.86, 0.62), 
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+sb_fish_post_plot2
+
+
+```
+
+
+
+####plots - conditional effects
+```{r}
+cols <- c("richness" = "#FFC20A", "biomass" = "#0C7BDC")
+
+conditional_effects
+
+#estimated lines: 
+me_fish_bio<-conditional_effects(fish_sb_mod_c, prob = .75, effects = 'logbio_c')$logbio_c
+me_fish_rich<-conditional_effects(fish_sb_mod_c, prob = .75, effects = 'rich_c')$rich_c
+
+#partialized residuals
+p_sb_fish_bio<- partialize(fish_sb_mod_c,  vars="logbio_c", data = ch_2015_div_fish_cs)
+p_sb_fish_rich<- partialize(fish_sb_mod_c,  vars="rich_c", data = ch_2015_div_fish_cs)
+
+
+fish_bio_cond_plot<-
+ggplot(data = me_fish_bio, aes(x = logbio_c, y = estimate__)) + 
+  geom_line(color = "#0C7BDC", lwd = 1.2) +
+  geom_ribbon(aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+  geom_point(data = p_sb_fish_bio,  
+              aes(x = logbio_c,  y = logbio_fish), alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+  xlab("Seabird biomass (log kg ha)")+
+ylab("Fish biomass (log kg ha)") + 
+  scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+    scale_y_continuous(breaks = c(4,6,8), limits = c(4, 8))+
+theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+
+
+fish_rich_cond_plot<-
+ggplot(data = me_fish_rich, aes(x = rich_c, y = estimate__)) + 
+  geom_ribbon(aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(color = "#FFC20A", lwd = 1.2) +
+  geom_point(data = p_sb_fish_rich,  
+              aes(x = rich_c,  y = logbio_fish), alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #
+  xlab("Seabird species richness")+
+ylab("Fish biomass (log kg ha)") + 
+  scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+    scale_y_continuous(breaks = c(4,6,8), limits = c(4, 8))+
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+
+
+fish_bio_cond_plot
+fish_rich_cond_plot
+
+```
+
+
+
+##combine n plot and fish plot into one figure (new Figure 1):
+```{r}
+seabird_n_posterior_plots #from other file
+sb_fish_post_plot
+
+##n15:
+cols <- c( "biomass" = "#0C7BDC", "richness" = "#FFC20A")
+
+seabird_n_posterior_plots2<-
+  ggplot(as_draws_df(seabird_n15_mod_cor2)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_Soil_logbio_cs,  y = 5,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Soil_rich_cs,  y = 4.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+
+    stat_halfeye(aes(x = b_Leaves_logbio_cs,  y = 4,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Leaves_rich_cs,  y = 3.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Macroalgae_logbio_cs,  y = 3,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Macroalgae_rich_cs,  y = 2.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Sponge_logbio_cs,  y = 2,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Sponge_rich_cs,  y = 1.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Turf_logbio_cs,  y = 1,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Turf_rich_cs,  y = 0.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Fish_logbio_cs,  y = 0,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Fish_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+##Points: 
+   stat_halfeye(aes(x = b_Soil_logbio_cs,  y = 5,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Soil_rich_cs,  y = 4.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+
+    stat_halfeye(aes(x = b_Leaves_logbio_cs,  y = 4,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Leaves_rich_cs,  y = 3.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Macroalgae_logbio_cs,  y = 3,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Macroalgae_rich_cs,  y = 2.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Sponge_logbio_cs,  y = 2,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Sponge_rich_cs,  y = 1.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Turf_logbio_cs,  y = 1,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Turf_rich_cs,  y = 0.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Fish_logbio_cs,  y = 0,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Fish_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+ scale_y_continuous(breaks=seq(5,0, by=-1), labels=c("0" = "soil", "1" = "leaves", "2" = "macroalgae","3"= "sponge","4"= "turf algae", "5" = "damselfish")) +
+coord_cartesian(xlim=c(-4,11))+ 
+theme_bw() + 
+  scale_fill_manual(values = cols, name = "", labels = c("seabird biomass", "seabird richness"))+
+    scale_colour_manual(values = cols, name = "", labels = c("seabird biomass", "seabird richness"))+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 14),
+       legend.position = c(.8,.11),
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+
+seabird_n_posterior_plots2
+
+
+
+##fish:
+cols <- c("biomass" = "#0C7BDC", "richness" = "#FFC20A")
+
+sb_fish_post_plot2<-
+ggplot(as_draws_df(fish_sb_mod_cs)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+##Points: 
+   stat_halfeye(aes(x = b_logbio_cs,  y = -.02,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+#  coord_cartesian(xlim=c(-1.0,2.5))+ #trying to align 0 line with n15 plot - nevermind looks weird. 
+ xlab("")+
+  ylab("coral-reef\nfish biomass")+
+  theme_bw() + 
+ scale_fill_manual(values = cols, name = "", labels = c("seabird biomass", "seabird richness"))+
+    scale_colour_manual(values = cols, name = "", labels = c("seabird biomass", "seabird richness"))+
+  guides(y = "none")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.title.y=element_text(angle=0, vjust = .05, size = 11),
+        text = element_text(size = 14),
+          legend.position=c(0.86, 0.62), 
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+sb_fish_post_plot2
+
+
+post_plots_fig1<-plot_grid(seabird_n_posterior_plots2, sb_fish_post_plot2,
+           ncol=1, align = "hv", axis = "l", rel_heights =c(.7, .3), labels = "auto")
+post_plots_fig1
+
+
+#ggsave(filename = "post_plots_fig1.pdf", 
+#      plot = post_plots_fig1,
+#       width = 8,
+#       height = 8,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```
+
+
+#save conditional plots (Supplemental Figure 2)
+```{r}
+
+fish_bio_cond_plot
+fish_rich_cond_plot
+
+
+fish_cond_plots<-plot_grid(fish_bio_cond_plot, fish_rich_cond_plot,
+           ncol=2, align = "hv")
+fish_cond_plots
+
+
+#ggsave(filename = "fish_cond_plots.pdf", 
+#      plot = fish_cond_plots,
+#       width = 8,
+#       height = 4,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```
+

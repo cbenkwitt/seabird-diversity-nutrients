@@ -1,0 +1,937 @@
+---
+title: "Seabird effects on nitrogen"
+author: "CEB"
+date: "01/18/2022"
+output: html_document
+---
+
+
+##load packages
+```{r}
+library(tidyverse) #for everything
+
+#for bayes models
+library(brms)
+library(tidybayes)
+library(jtools)
+library(modelr) #for data_grid function
+
+library(cowplot) #for combining plots
+library(RColorBrewer) # for plots
+
+##for checking vifs:
+library(lme4)
+library(car)
+
+```
+
+
+###load seabird data - full
+```{r}
+load("seabird_comm_data_2021_09_30.Rdata")
+
+##seabird/site data:
+#seabird_dat_ch_2015_meta
+
+#with calculations:
+#seabird_dat_ch_2015_bio
+
+#by island (but no diversity stats):
+#seabird_dat_ch_2015_bio_isl
+
+#by species with island totals:
+#seabird_chagos_2015_dat_meta
+
+#by island, wide with diversity data:
+#ch_2015_div
+
+##seabird/site data wide:
+#ch_15_bio_wide #biomass (prop year kg/ha) and breeding pairs (#/ha)
+
+#isotope data: 
+#iso_dat_ch_rl
+
+##isotope plus seabird data:
+#iso_bio_ch
+
+##isotope plus diversity data
+#ch_iso_div_15
+levels(iso_dat_ch_rl$Island)
+
+```
+
+
+
+#make isotope data wide to run multivariate analysis
+```{r}
+#make wide - need to keep one row per sample, so add in id variable:
+str(ch_iso_div_15)
+
+ch_iso_div_15_id<-
+  ch_iso_div_15 %>%
+  group_by(Island, Sample_type)%>%
+  mutate(id=row_number())
+
+
+ch_iso_div_15_id_wide<-
+  ch_iso_div_15_id %>%
+  pivot_wider(id_cols =c("Atoll", "Island", "richness", "log_bio_kg_ha", "sum_bio_prop_year_kg_ha",
+                         "logbio_cs", "rich_cs", "logrich_cs", "rich_c", "logbio_c", 
+                         "id"), 
+              names_from = "Sample_type", values_from = "N15")
+ch_iso_div_15_id_wide  
+```
+
+
+
+
+##quick plot
+```{r}
+
+ch_iso_div_15 %>%
+  ggplot(aes(x = sum_bio_prop_year_kg_ha, y = N15, colour = richness)) + #
+  facet_wrap(~Sample_type, scales = "free")+
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = "none", alpha = "none") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+ch_iso_div_15 %>%
+  ggplot(aes(x = log_bio_kg_ha, y = N15, colour = richness)) + #
+  facet_wrap(~Sample_type, scales = "free")+
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = "none", alpha = "none") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+ch_iso_div_15 %>%
+  ggplot(aes(x = richness, y = N15, colour = log_bio_kg_ha)) + #
+  facet_wrap(~Sample_type, scales = "free")+
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = "none", alpha = "none") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+
+ch_iso_div_15 %>%
+  ggplot(aes(x = log(richness), y = N15, colour = log_bio_kg_ha)) + #
+  facet_wrap(~Sample_type, scales = "free")+
+ geom_point(aes(alpha=.9),  size = 3) +
+  scale_colour_continuous(type = "viridis")+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+    guides(size = "none", alpha = "none") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank())
+
+##log bio definitely looks better than non-logged, richness doesn't seem to matter logged or non-logged
+
+```
+
+
+
+#check VIF on lmer's
+as per: https://discourse.mc-stan.org/t/alternative-to-car-vif-for-brmsfit-models/3970
+```{r}
+
+levels(ch_iso_div_15$Sample_type)
+
+######soil-------------------------------------
+soil_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Soil")%>% 
+  droplevels
+
+##check vif:
+soil_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = soil_dat)
+vif(soil_lmer) #2.439282      2.439282 
+
+
+######leaves-------------------------------------
+leaves_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Leaves")%>% 
+  droplevels
+
+##check vif:
+leaves_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = leaves_dat)
+vif(leaves_lmer) #2.440099      2.440099  
+
+
+######Sponge-------------------------------------
+sponge_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Sponge")%>% 
+  droplevels
+
+##check vif:
+sponge_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = sponge_dat)
+vif(sponge_lmer) #2.440099      2.440099 
+
+
+######macro-------------------------------------
+macro_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Macroalgae")%>% 
+  droplevels
+
+##check vif:
+macro_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = macro_dat)
+vif(macro_lmer) #2.441152      2.441152 
+
+
+######turf-------------------------------------
+turf_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Turf")%>% 
+  droplevels
+
+##check vif:
+turf_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = turf_dat)
+vif(turf_lmer) #2.440099      2.440099 
+
+
+######fish-------------------------------------
+fish_dat<-
+  ch_iso_div_15%>% 
+  filter(Sample_type=="Fish")%>% 
+  droplevels
+
+##check vif:
+fish_lmer<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = fish_dat)
+vif(fish_lmer) #2.198112      2.198112
+
+```
+
+
+
+##run full Bayesian models
+```{r}
+
+#build model - centered AND scaled to compare relative effect sizes:-----
+soil_mod_cs<-bf(Soil|mi()   ~ rich_cs + logbio_cs + (1|p|Island))
+leaves_mod_cs<-bf(Leaves|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+macro_mod_cs<-bf(Macroalgae|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+sponge_mod_cs<-bf(Sponge|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+turf_mod_cs<-bf(Turf|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+fish_mod_cs<-bf(Fish|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+
+
+seabird_n15_mod_cor2 <- brm(soil_mod_cs +leaves_mod_cs + macro_mod_cs + sponge_mod_cs + turf_mod_cs + fish_mod_cs + 
+                  set_rescor(TRUE), 
+                data=ch_iso_div_15_id_wide,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+             # sample_prior="yes",
+                file = "seabird_n15_mod_cor2")
+print(seabird_n15_mod_cor2)
+
+
+#check diagnositcs
+plot(seabird_n15_mod_cor2, ask = FALSE)
+pp_check(seabird_n15_mod_cor2, resp="Soil")
+pp_check(seabird_n15_mod_cor2, resp="Leaves")
+pp_check(seabird_n15_mod_cor2, resp="Macroalgae")
+pp_check(seabird_n15_mod_cor2, resp="Sponge")
+pp_check(seabird_n15_mod_cor2, resp="Turf")
+pp_check(seabird_n15_mod_cor2, resp="Fish")
+#looks good!
+
+
+#quick hypothesis test to see trends:
+hypothesis(seabird_n15_mod_cor2, c("Soil_rich_cs>0", "Soil_logbio_cs>0", 
+                              "Leaves_rich_cs>0", "Leaves_logbio_cs>0", 
+                              "Macroalgae_rich_cs>0", "Macroalgae_logbio_cs>0", 
+                              "Sponge_rich_cs>0", "Sponge_logbio_cs>0", 
+                              "Turf_rich_cs>0", "Turf_logbio_cs>0", 
+                              "Fish_rich_cs>0", "Fish_logbio_cs>0"))
+
+
+####run centered, not scaled model to look at absolute effect sizes-----
+#build model:
+soil_mod_c<-bf(Soil   ~ rich_c + logbio_c + (1|p|Island))
+leaves_mod_c<-bf(Leaves  ~ rich_c + logbio_c + (1|p|Island))
+macro_mod_c<-bf(Macroalgae  ~ rich_c + logbio_c + (1|p|Island))
+sponge_mod_c<-bf(Sponge   ~ rich_c + logbio_c + (1|p|Island))
+turf_mod_c<-bf(Turf   ~ rich_c + logbio_c + (1|p|Island))
+fish_mod_c<-bf(Fish   ~ rich_c + logbio_c + (1|p|Island))
+
+seabird_n15_mod_cor2_c <- brm(soil_mod_c +leaves_mod_c + macro_mod_c + sponge_mod_c + turf_mod_c + fish_mod_c + 
+                  set_rescor(TRUE), 
+                data=ch_iso_div_15_id_wide,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+             # sample_prior="yes",
+                file = "seabird_n15_mod_cor2_c")
+
+
+print(seabird_n15_mod_cor2_c)
+
+#check diagnositcs
+plot(seabird_n15_mod_cor2_c, ask = FALSE)
+pp_check(seabird_n15_mod_cor2_c, resp="Soil")
+pp_check(seabird_n15_mod_cor2_c, resp="Leaves")
+pp_check(seabird_n15_mod_cor2_c, resp="Macroalgae")
+pp_check(seabird_n15_mod_cor2_c, resp="Sponge")
+pp_check(seabird_n15_mod_cor2_c, resp="Turf")
+pp_check(seabird_n15_mod_cor2_c, resp="Fish")
+#looks good!
+
+
+#get estimates
+n15_c_posterior_est<-
+seabird_n15_mod_cor2_c%>%
+  gather_draws(b_Soil_rich_c, b_Soil_logbio_c, 
+               b_Leaves_rich_c, b_Leaves_logbio_c,
+               b_Macroalgae_rich_c, b_Macroalgae_logbio_c,
+               b_Sponge_rich_c, b_Sponge_logbio_c,
+               b_Turf_rich_c, b_Turf_logbio_c,
+               b_Fish_rich_c, b_Fish_logbio_c) %>%
+  median_hdi(.width=c(.5,.95))
+n15_c_posterior_est
+
+```
+
+
+#####use reduced seabird data (eliminated rare species)
+```{r}
+##load and reformat data-----
+load("seabird_comm_data_REDUCED_2021_09_30.Rdata")
+
+#make wide - need to keep one row per sample, so add in id variable:
+str(ch_iso_div_15_R3)
+
+ch_iso_div_15_R3_id<-
+  ch_iso_div_15_R3 %>%
+  group_by(Island, Sample_type)%>%
+  mutate(id=row_number())
+
+
+ch_iso_div_15_R3_id_wide<-
+  ch_iso_div_15_R3_id %>%
+  pivot_wider(id_cols =c("Atoll", "Island", "richness", "log_bio_kg_ha", "sum_bio_prop_year_kg_ha",
+                         "logbio_cs", "rich_cs", "logrich_cs", "rich_c", "logbio_c", 
+                         "id"), 
+              names_from = "Sample_type", values_from = "N15")
+ch_iso_div_15_R3_id_wide  
+  
+
+#run lmers to check VIFs-----
+######soil-------------------------------------
+soil_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Soil")%>% 
+  droplevels
+
+##check vif:
+soil_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = soil_dat_R3)
+vif(soil_lmer_R3) #3.897417      3.897417 
+
+
+######leaves-------------------------------------
+leaves_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Leaves")%>% 
+  droplevels
+
+##check vif:
+leaves_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = leaves_dat_R3)
+vif(leaves_lmer_R3) #3.898333      3.898333 
+
+
+######Sponge-------------------------------------
+sponge_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Sponge")%>% 
+  droplevels
+
+##check vif:
+sponge_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = sponge_dat_R3)
+vif(sponge_lmer_R3) #3.898333      3.898333
+
+
+######macro-------------------------------------
+macro_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Macroalgae")%>% 
+  droplevels
+
+##check vif:
+macro_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = macro_dat_R3)
+vif(macro_lmer_R3) # 3.900468      3.900468 
+
+
+######turf-------------------------------------
+turf_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Turf")%>% 
+  droplevels
+
+##check vif:
+turf_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = turf_dat_R3)
+vif(turf_lmer_R3) #3.898333      3.898333 
+
+
+######fish-------------------------------------
+fish_dat_R3<-
+  ch_iso_div_15_R3%>% 
+  filter(Sample_type=="Fish")%>% 
+  droplevels
+
+##check vif:
+fish_lmer_R3<-lmer(N15 ~ richness + log_bio_kg_ha + (1|Island), data = fish_dat_R3)
+vif(fish_lmer_R3) #    3.65215       3.65215 
+
+
+##all looks good
+
+##run full bayesian model---------------
+#build model:
+soil_mod_cs<-bf(Soil|mi()   ~ rich_cs + logbio_cs + (1|p|Island))
+leaves_mod_cs<-bf(Leaves|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+macro_mod_cs<-bf(Macroalgae|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+sponge_mod_cs<-bf(Sponge|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+turf_mod_cs<-bf(Turf|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+fish_mod_cs<-bf(Fish|mi()    ~ rich_cs + logbio_cs + (1|p|Island))
+
+
+seabird_n15_mod_cor2_R3 <- brm(soil_mod_cs +leaves_mod_cs + macro_mod_cs + sponge_mod_cs + turf_mod_cs + fish_mod_cs + 
+                  set_rescor(TRUE), 
+                data=ch_iso_div_15_R3_id_wide,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+             # sample_prior="yes",
+                file = "seabird_n15_mod_cor2_R3")
+print(seabird_n15_mod_cor2_R3)
+
+
+#check diagnositcs
+plot(seabird_n15_mod_cor2_R3, ask = FALSE)
+pp_check(seabird_n15_mod_cor2_R3, resp="Soil")
+pp_check(seabird_n15_mod_cor2_R3, resp="Leaves")
+pp_check(seabird_n15_mod_cor2_R3, resp="Macroalgae")
+pp_check(seabird_n15_mod_cor2_R3, resp="Sponge")
+pp_check(seabird_n15_mod_cor2_R3, resp="Turf")
+pp_check(seabird_n15_mod_cor2_R3, resp="Fish")
+#looks good!
+
+
+#quick hypothesis test to see trends:
+hypothesis(seabird_n15_mod_cor2_R3, c("Soil_rich_cs>0", "Soil_logbio_cs>0", 
+                              "Leaves_rich_cs>0", "Leaves_logbio_cs>0", 
+                              "Macroalgae_rich_cs>0", "Macroalgae_logbio_cs>0", 
+                              "Sponge_rich_cs>0", "Sponge_logbio_cs>0", 
+                              "Turf_rich_cs>0", "Turf_logbio_cs>0", 
+                              "Fish_rich_cs>0", "Fish_logbio_cs>0"))
+
+#again, very similar results to above model, so that's good and can just use full dataset model.
+
+```
+
+
+#Plots - posterior distributions
+```{r}
+
+cols <- c( "biomass" = "#0C7BDC", "richness" = "#FFC20A")
+
+seabird_n_posterior_plots<-
+  ggplot(as_draws_df(seabird_n15_mod_cor2)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_Soil_logbio_cs,  y = 5,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Soil_rich_cs,  y = 4.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+
+    stat_halfeye(aes(x = b_Leaves_logbio_cs,  y = 4,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Leaves_rich_cs,  y = 3.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Macroalgae_logbio_cs,  y = 3,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Macroalgae_rich_cs,  y = 2.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Sponge_logbio_cs,  y = 2,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Sponge_rich_cs,  y = 1.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Turf_logbio_cs,  y = 1,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Turf_rich_cs,  y = 0.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+    stat_halfeye(aes(x = b_Fish_logbio_cs,  y = 0,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_Fish_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+##Points: 
+   stat_halfeye(aes(x = b_Soil_logbio_cs,  y = 5,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Soil_rich_cs,  y = 4.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+
+    stat_halfeye(aes(x = b_Leaves_logbio_cs,  y = 4,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Leaves_rich_cs,  y = 3.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Macroalgae_logbio_cs,  y = 3,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Macroalgae_rich_cs,  y = 2.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Sponge_logbio_cs,  y = 2,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Sponge_rich_cs,  y = 1.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Turf_logbio_cs,  y = 1,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Turf_rich_cs,  y = 0.97,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  
+    stat_halfeye(aes(x = b_Fish_logbio_cs,  y = 0,  fill= "biomass", color= "biomass"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_Fish_rich_cs,  y = -.03,  fill= "richness", color= "richness"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+ scale_y_continuous(breaks=seq(5,0, by=-1), labels=c("0" = "soil", "1" = "leaves", "2" = "macroalgae","3"= "sponge","4"= "turf algae", "5" = "damselfish")) +
+coord_cartesian(xlim=c(-4,11))+ 
+theme_bw() + 
+  scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 14),
+       legend.position = c(.9,.11),
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+
+seabird_n_posterior_plots
+
+
+#save plot:
+#ggsave(filename = "seabird_n_posterior_plots.pdf", 
+#      plot = seabird_n_posterior_plots,
+#       width = 8,
+#       height = 5,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```
+
+
+
+#plot conditional effects
+```{r}
+#extract conditional effects:
+me_soil_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Soil", plot = FALSE)[[1]]
+me_leaves_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Leaves", plot = FALSE)[[1]]
+me_macro_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Macroalgae", plot = FALSE)[[1]]
+me_sponge_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Sponge", plot = FALSE)[[1]]
+me_turf_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Turf", plot = FALSE)[[1]]
+me_fish_bio<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'logbio_c', resp = "Fish", plot = FALSE)[[1]]
+
+
+me_soil_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Soil", plot = FALSE)[[1]]
+me_leaves_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Leaves", plot = FALSE)[[1]]
+me_macro_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Macroalgae", plot = FALSE)[[1]]
+me_sponge_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Sponge", plot = FALSE)[[1]]
+me_turf_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Turf", plot = FALSE)[[1]]
+me_fish_rich<-conditional_effects(seabird_n15_mod_cor2_c, prob = .75, effects = 'rich_c', resp = "Fish", plot = FALSE)[[1]]
+
+
+#extract partialized residuals
+p_soil_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Soil', data = ch_iso_div_15_id_wide)
+p_leaves_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Leaves', data = ch_iso_div_15_id_wide)
+p_macro_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Macroalgae', data = ch_iso_div_15_id_wide)
+p_sponge_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Sponge', data = ch_iso_div_15_id_wide)
+p_turf_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Turf', data = ch_iso_div_15_id_wide)
+p_fish_rich<-partialize(seabird_n15_mod_cor2_c, vars= "rich_c", resp = 'Fish', data = ch_iso_div_15_id_wide)
+
+
+p_soil_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Soil', data = ch_iso_div_15_id_wide)
+p_leaves_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Leaves', data = ch_iso_div_15_id_wide)
+p_macro_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Macroalgae', data = ch_iso_div_15_id_wide)
+p_sponge_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Sponge', data = ch_iso_div_15_id_wide)
+p_turf_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Turf', data = ch_iso_div_15_id_wide)
+p_fish_bio<-partialize(seabird_n15_mod_cor2_c, vars= "logbio_c", resp = 'Fish', data = ch_iso_div_15_id_wide)
+
+
+###plots - biomass-----
+##determine axis labels
+ch_iso_div_15_id_wide%>%
+  group_by(log_bio_kg_ha)%>%
+  summarize(mean(logbio_c))
+
+#   log_bio_kg_ha `mean(logbio_c)`
+#           <dbl>            <dbl>
+# 1       -3.25             -5.38 
+# 2       -1.85             -3.98 
+# 3       -1.68             -3.81 
+# 4        0.0198           -2.11 
+# 5        0.0830           -2.05 
+# 6        0.393            -1.74 
+# 7        1.84             -0.293
+# 8        5.34              3.21 
+# 9        5.86              3.73 
+#10        6.03              3.90 
+#11        6.14              4.01 
+#12        6.63              4.51 
+
+#need centered biomass range to be -5.38 to 4.51
+## = log(biomass) range of -3.25 to 6.63
+###want log biomass tick values to = -2, 0, 2, 4, 6
+##this equals centered biomass values of:
+-2 - mean(ch_iso_div_15_id_wide$log_bio_kg_ha) #-4.128596
+0 - mean(ch_iso_div_15_id_wide$log_bio_kg_ha) # -2.128596
+2 - mean(ch_iso_div_15_id_wide$log_bio_kg_ha) #-0.1285959
+4 - mean(ch_iso_div_15_id_wide$log_bio_kg_ha) #1.871404
+6 - mean(ch_iso_div_15_id_wide$log_bio_kg_ha) # 3.871404
+
+
+soil_bio_plot<-
+  p_soil_bio %>%
+  select(logbio_c, Soil)%>%
+  ggplot(aes(x = logbio_c, y = Soil)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_soil_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_soil_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+    scale_y_continuous(limits = c(1.5, 14.2), breaks=c(4, 8, 12))+
+  xlab(" ")+
+ylab(expression(paste("Soil ", delta^15, "N"))) + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+soil_bio_plot #this is plot with partialized residuals
+
+
+
+leaves_bio_plot<-
+  p_leaves_bio %>%
+  select(logbio_c, Leaves)%>%
+  ggplot(aes(x = logbio_c, y = Leaves)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_leaves_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_leaves_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+     scale_y_continuous(limits = c(-3.74, 11.94), breaks=c(-2, 2, 6, 10))+
+  xlab(" ")+
+ylab(expression(paste("Leaves ",delta^15, "N"))) + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+leaves_bio_plot #this is plot with partialized residuals
+
+
+
+macro_bio_plot<-
+  p_macro_bio %>%
+  select(logbio_c, Macroalgae)%>%
+  ggplot(aes(x = logbio_c, y = Macroalgae)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_macro_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_macro_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+    scale_y_continuous(limits = c(-.68, 10.31), breaks=c(0, 4, 8))+
+  xlab(" ")+
+ylab(expression(paste("Macroalgae ",delta^15, "N"))) + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+macro_bio_plot #this is plot with partialized residuals
+
+
+
+sponge_bio_plot<-
+  p_sponge_bio %>%
+  select(logbio_c, Sponge)%>%
+  ggplot(aes(x = logbio_c, y = Sponge)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_sponge_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_sponge_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+  xlab(" ")+
+ylab(expression(paste("Sponge ",delta^15, "N"))) + 
+       scale_y_continuous(breaks=c(5, 6, 7, 8))+
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sponge_bio_plot #this is plot with partialized residuals
+
+
+
+turf_bio_plot<-
+  p_turf_bio %>%
+  select(logbio_c, Turf)%>%
+  ggplot(aes(x = logbio_c, y = Turf)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_turf_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_turf_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+         scale_y_continuous(limits = c(2.8, 7.3), breaks=c(3, 5, 7))+
+  xlab(" ")+
+ylab(expression(paste("Turf algae ", delta^15, "N"))) + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+turf_bio_plot #this is plot with partialized residuals
+
+
+fish_bio_plot<-
+  p_fish_bio %>%
+  select(logbio_c, Fish)%>%
+  ggplot(aes(x = logbio_c, y = Fish)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_fish_bio, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_fish_bio, aes(x = logbio_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.128596, -2.128596, -0.1285959, 1.871404, 3.871404), 
+                      labels=c("-4.128596" = "-2", "-2.128596" = "0", "-0.1285959" = "2", "1.871404" = "4", "3.871404" = "6")) +
+  xlab("Seabird biomass (log kg ha)")+
+ylab(expression(paste("Damselfish ",delta^15, "N"))) + 
+             scale_y_continuous(limits = c(9.4, 11.7), breaks=c(10, 11))+
+theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+fish_bio_plot #this is plot with partialized residuals
+
+
+
+###plots - richness-----
+##determine axis labels
+ch_iso_div_15_id_wide%>%
+  group_by(richness)%>%
+  summarize(mean(rich_c))
+
+#richness #centered(richness)
+#     richness `mean(rich_c)`
+#       <int>          <dbl>
+#1        2          -4.25
+#2        4          -2.25
+#3        5          -1.25
+#4        6          -0.25
+#5        8           1.75
+#6        9           2.75
+#7       10           3.75
+
+
+
+
+soil_rich_plot<-
+  p_soil_rich %>%
+  select(rich_c, Soil)%>%
+  ggplot(aes(x = rich_c, y = Soil)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_soil_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_soil_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+    scale_y_continuous(limits = c(1.5, 14.2), breaks=c(4, 8, 12))+
+  xlab(" ")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+soil_rich_plot #this is plot with partialized residuals
+
+
+leaves_rich_plot<-
+  p_leaves_rich %>%
+  select(rich_c, Leaves)%>%
+  ggplot(aes(x = rich_c, y = Leaves)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_leaves_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_leaves_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+     scale_y_continuous(limits = c(-3.74, 11.94), breaks=c(-2, 2, 6, 10))+
+  xlab(" ")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+leaves_rich_plot #this is plot with partialized residuals
+
+
+
+macro_rich_plot<-
+  p_macro_rich %>%
+  select(rich_c, Macroalgae)%>%
+  ggplot(aes(x = rich_c, y = Macroalgae)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_macro_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_macro_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+     scale_y_continuous(limits = c(-.68, 10.31), breaks=c(0, 4, 8))+
+  xlab(" ")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+macro_rich_plot #this is plot with partialized residuals
+
+sponge_rich_plot<-
+  p_sponge_rich %>%
+  select(rich_c, Sponge)%>%
+  ggplot(aes(x = rich_c, y = Sponge)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_sponge_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_sponge_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+         scale_y_continuous(limits = c(4.3, 8.3), breaks=c(5, 6, 7, 8))+
+  xlab(" ")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sponge_rich_plot #this is plot with partialized residuals
+
+
+turf_rich_plot<-
+  p_turf_rich %>%
+  select(rich_c, Turf)%>%
+  ggplot(aes(x = rich_c, y = Turf)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_turf_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_turf_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+         scale_y_continuous(limits = c(2.8, 7.3), breaks=c(3, 5, 7))+
+  xlab(" ")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+turf_rich_plot #this is plot with partialized residuals
+
+
+fish_rich_plot<-
+  p_fish_rich %>%
+  select(rich_c, Fish)%>%
+  ggplot(aes(x = rich_c, y = Fish)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_fish_rich, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_fish_rich, aes(x = rich_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-4.25, -2.25, -0.25, 1.75, 3.75), 
+                      labels=c("-4.25" = "2", "-2.25" = "4", "-0.25" = "6", "1.75" = "8", "3.75" = "10")) +
+             scale_y_continuous(limits = c(9.4, 11.7), breaks=c(10, 11))+
+xlab("Seabird species richness")+
+ylab(" ") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+fish_rich_plot #this is plot with partialized residuals
+
+
+
+###---combine and save plots----
+#####combine plots into one figure----------------
+n15_partial_plots<-plot_grid(soil_bio_plot, soil_rich_plot, leaves_bio_plot, leaves_rich_plot, macro_bio_plot, macro_rich_plot, sponge_bio_plot, sponge_rich_plot,turf_bio_plot, turf_rich_plot, fish_bio_plot, fish_rich_plot, 
+           ncol=2, align = "hv", labels ="auto")
+n15_partial_plots
+
+
+#ggsave(filename = "n15_partial_plots2.pdf", 
+#       plot = n15_partial_plots,
+#       width = 8,
+#       height = 11,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```

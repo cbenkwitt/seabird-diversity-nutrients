@@ -1,0 +1,606 @@
+---
+title: "seabird_bio_div_analysis"
+author: "CEB"
+date: "9/30/2021"
+output: html_document
+---
+
+##load packages
+```{r}
+library(tidyverse) #for everything
+
+#for bayes models
+library(brms)
+library(tidybayes)
+library(jtools)
+library(modelr) #for data_grid function
+
+library(cowplot) #for combining plots
+library(RColorBrewer) # for plots
+
+##for checking vifs:
+library(lme4)
+library(car)
+
+```
+
+
+#load data
+```{r}
+load("ch_2015_sb_veg_2021_09_30.Rdata")
+#ch_2015_sb_veg, ch_2015_sb_veg_cs, 
+#     ch_2015_bio_div_veg_R3,
+
+str(ch_2015_sb_veg_cs)
+
+```
+
+
+#check vifs of models to ensure no collinearity issues
+```{r}
+
+sb_bio_lmer<-lmer(log_bio_kg_ha ~  rat_status + non.native_forest_percent  + richness + (1|Atoll), data = ch_2015_sb_veg)
+vif(sb_bio_lmer) 
+ #            rat_status non.native_forest_percent                  richness 
+#                 3.575345                  3.910050                  3.421086 
+
+
+sb_rich_lmer<-lmer(richness ~  rat_status  + non.native_forest_percent  + island_size_ha + (1|Atoll), data = ch_2015_sb_veg)
+vif(sb_rich_lmer) 
+
+#               rat_status non.native_forest_percent         island_size_ha_pc 
+#                 3.836732                  3.252600                  1.406343 
+
+#all VIFs < 4 - good. 
+
+```
+
+
+#run full bayesian models
+```{r}
+#centered and scaled model to compare relative effect sizes-----
+sb_rich_mod_cs<-bf(richness  ~ rat_status  + nonative_forest_cs  + island_size_cs + (1|p|Atoll))
+sb_bio_mod_cs<-bf(log_bio_kg_ha  ~ rat_status +  nonative_forest_cs + rich_cs + (1|p|Atoll))
+
+seabird_bio_div_mod_cs_cor2 <- brm(sb_bio_mod_cs +sb_rich_mod_cs +
+                  set_rescor(TRUE), 
+                data=ch_2015_sb_veg_cs,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+                control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix og 12 divergent transitions
+             # sample_prior="yes",
+                file = "seabird_bio_div_mod_cs_cor2")
+#note the correlations among responses (set_rescor=TRUE) and within atolls (1|p|Atoll - all varying effects of atoll should be modeled as correlated) -  see https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html 
+print(seabird_bio_div_mod_cs_cor2) 
+pp_check(seabird_bio_div_mod_cs_cor2, resp = "richness")
+pp_check(seabird_bio_div_mod_cs_cor2, resp = "logbiokgha")
+plot(seabird_bio_div_mod_cs_cor2, ask = FALSE)
+#no sampling issues :)
+
+##quick hypothesis check
+hypothesis(seabird_bio_div_mod_cs_cor2, c("richness_rat_statusinfested<0", "richness_nonative_forest_cs<0", "richness_island_size_cs>0",
+                                          "logbiokgha_rat_statusinfested<0", "logbiokgha_nonative_forest_cs<0", "logbiokgha_rich_cs>0"))
+##looks like non-native forest has bigger effect on richness, while rat status has bigger effect on biomass (based on posterior probabilities)
+
+
+#centered, not scaled model to extract absolute effect sizes-----
+#need to rename logbiomass without _ for partialized residuals to extract properly
+ch_2015_sb_veg_cs2 <-
+  ch_2015_sb_veg_cs %>%
+  mutate(nonative_forest_c = scale(non.native_forest_percent, center = TRUE, scale = FALSE),
+         island_size_c = scale(island_size_ha, center = TRUE, scale = FALSE),
+         rich_c = scale(richness, center = TRUE, scale = FALSE),
+         logbiokgha = log_bio_kg_ha)
+
+
+#first run centered (not scaled) model:
+sb_rich_mod_c<-bf(richness  ~ rat_status  + nonative_forest_c  + island_size_c + (1|p|Atoll))
+sb_bio_mod_c<-bf(logbiokgha  ~ rat_status +  nonative_forest_c + rich_c + (1|p|Atoll))
+
+
+seabird_bio_div_mod_cor2_c <- brm(sb_bio_mod_c +sb_rich_mod_c +
+                  set_rescor(TRUE), 
+                data=ch_2015_sb_veg_cs2,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+                control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix og 12 divergent transitions
+             # sample_prior="yes",
+                file = "seabird_bio_div_mod_cor2_c")
+print(seabird_bio_div_mod_cor2_c) #no sampling issues :)
+
+
+
+###extract median hdis-----
+sb_bio_div_median_ests_cs<-
+seabird_bio_div_mod_cs_cor2%>%
+  gather_draws(b_logbiokgha_rat_statusinfested, b_logbiokgha_nonative_forest_cs, b_logbiokgha_rich_cs, 
+              b_richness_rat_statusinfested, b_richness_nonative_forest_cs, b_richness_island_size_cs, 
+               ) %>%
+  median_hdi(.width=c(.5,.95))
+sb_bio_div_median_ests_cs
+
+
+sb_bio_div_median_ests<-
+seabird_bio_div_mod_cor2_c%>%
+  gather_draws(b_logbiokgha_rat_statusinfested, b_logbiokgha_nonative_forest_c, b_logbiokgha_rich_c, 
+              b_richness_rat_statusinfested, b_richness_nonative_forest_c, b_richness_island_size_c, 
+               ) %>%
+  median_hdi(.width=c(.5,.95))
+sb_bio_div_median_ests
+
+
+#backtransform for seabird biomass as response (exp):
+exp(-0.0297) #non-native forest 0.9707367
+exp(-5.09) #rats:  0.00615802
+
+exp(0.0297) #non-native forest 1.030145
+exp(5.09)   #rats:   162.3899
+exp(12.1) # 179871.9 
+exp(-2.30) #0.1002588,
+exp(-12.1)
+
+
+#look at increase in non-native forest by 25%
+25*-0.0407 #-1.0175
+25*-0.100 #-2.5
+  25*0.0187 #.4675
+-1.61 
+
+
+```
+
+
+##re-run models with reduced seabird data (removed rare species)
+```{r}
+#check vifs----
+sb_bio_lmer<-lmer(log_bio_kg_ha ~  rat_status + non.native_forest_percent + richness + (1|Atoll), data = ch_2015_bio_div_veg_R3)
+vif(sb_bio_lmer) 
+ #         rat_status non.native_forest_percent                  richness 
+ #                3.995810                  4.033849                  4.446541 
+
+
+sb_rich_lmer<-lmer(richness ~  rat_status  + non.native_forest_percent  + island_size_ha + (1|Atoll), data = ch_2015_bio_div_veg_R3)
+vif(sb_rich_lmer) 
+
+#                 rat_status non.native_forest_percent         island_size_ha_pc 
+#                 3.812349                  3.239813                  1.397279 
+
+
+#build bayesian models----
+
+
+#centered and scaled model to compare relative effect sizes-----
+sb_rich_mod_cs<-bf(richness  ~ rat_status  + nonative_forest_cs  + island_size_cs + (1|p|Atoll))
+sb_bio_mod_cs<-bf(log_bio_kg_ha  ~ rat_status +  nonative_forest_cs + rich_cs + (1|p|Atoll))
+
+seabird_bio_div_mod_cs_cor2_R <- brm(sb_bio_mod_cs +sb_rich_mod_cs +
+                  set_rescor(TRUE), 
+                data=c,
+              iter = 3000, warmup = 1000, cores=4, chains = 4, 
+                control = list(adapt_delta = 0.999, max_treedepth = 15), #to fix og 12 divergent transitions
+             # sample_prior="yes",
+                file = "seabird_bio_div_mod_cs_cor2_R")
+#note the correlations among responses (set_rescor=TRUE) and within atolls (1|p|Atoll - all varying effects of atoll should be modeled as correlated) -  see https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html 
+print(seabird_bio_div_mod_cs_cor2_R) 
+pp_check(seabird_bio_div_mod_cs_cor2_R, resp = "richness")
+pp_check(seabird_bio_div_mod_cs_cor2_R, resp = "logbiokgha")
+plot(seabird_bio_div_mod_cs_cor2_R, ask = FALSE)
+#no sampling issues :)
+
+
+
+#similar estimates as model with full data - no change in conclusions (rat status, non-native forest have negative effects on both responses,
+#rat status has larger effect size for biomass, non-native forest and rat-status have similar effect sizes for richness (but smaller CI for non-native forest))
+
+```
+
+
+##plots - posterior distributions
+```{r}
+
+#full model----
+
+cols <- c("rats" = "#E1BE6A", "non-native forest" = "#40B0A6")
+
+
+seabird_bio_div_posterior_plots<-
+  ggplot(as_draws_df(seabird_bio_div_mod_cs_cor2)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_logbiokgha_rat_statusinfested,  y = 5,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_logbiokgha_nonative_forest_cs,  y = 4.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+
+    stat_halfeye(aes(x = b_richness_rat_statusinfested,  y = 4,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_richness_nonative_forest_cs,  y = 3.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+  
+##Points: 
+   stat_halfeye(aes(x = b_logbiokgha_rat_statusinfested,  y = 5,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2,  slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_logbiokgha_nonative_forest_cs,  y = 4.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+
+    stat_halfeye(aes(x = b_richness_rat_statusinfested,  y = 4,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_richness_nonative_forest_cs,  y = 3.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+ scale_y_continuous(breaks=seq(4,5, by=1), labels=c("4"= "seabird richness", "5" = "seabird biomass")) +
+theme_bw() + 
+  scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 24),
+       legend.position = c(.82,.95),
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+
+seabird_bio_div_posterior_plots
+
+```
+
+
+
+#Plots -  conditional effects
+```{r}
+
+#use centered (not scaled) models for this: 
+#extract effects
+me_sb_bio_rat<-conditional_effects(seabird_bio_div_mod_cor2_c, prob = .75, effects = 'rat_status', resp = "logbiokgha", plot = FALSE)[[1]]
+me_sb_bio_veg<-conditional_effects(seabird_bio_div_mod_cor2_c, prob = .75, effects = 'nonative_forest_c', resp = "logbiokgha", plot = FALSE)[[1]]
+
+me_sb_rich_rat<-conditional_effects(seabird_bio_div_mod_cor2_c, prob = .75, effects = 'rat_status', resp = "richness", plot = FALSE)[[1]]
+me_sb_rich_veg<-conditional_effects(seabird_bio_div_mod_cor2_c, prob = .75, effects = 'nonative_forest_c', resp = "richness", plot = FALSE)[[1]]
+
+#extract partialized residuals:
+bio_rat<- partialize(seabird_bio_div_mod_cor2_c, resp = 'logbiokgha', vars=c("rat_status", "Atoll"), data = ch_2015_sb_veg_cs2)
+bio_veg<- partialize(seabird_bio_div_mod_cor2_c, resp = 'logbiokgha', vars=c("nonative_forest_c", "Atoll"), data = ch_2015_sb_veg_cs2)
+
+rich_rat<- partialize(seabird_bio_div_mod_cor2_c, resp = 'richness', vars=c("rat_status", "Atoll"), data = ch_2015_sb_veg_cs2)
+rich_veg<- partialize(seabird_bio_div_mod_cor2_c, resp = 'richness', vars=c("nonative_forest_c", "Atoll"), data = ch_2015_sb_veg_cs2)
+str(rich_veg)
+
+###plot biomass
+##determine axis labels
+bio_veg%>%
+  group_by(non.native_forest_percent)%>%
+  summarize(mean(nonative_forest_c))
+#  non.native_forest_percent `mean(nonative_forest_c)`
+#                      <dbl>                     <dbl>
+#1                       0                      -45.9 
+#2                      37.5                     -8.42
+#3                      55.6                      9.64
+#4                      66.2                     20.3 
+#5                      70                       24.1 
+#6                      72.4                     26.4 
+#7                      73.6                     27.6 
+#8                      84.9                     39.0 
+#9                      91.0                     45.0 
+
+
+#need centered non.native_forest_percent range to be -45.9  to 45.0
+## = non.native_forest_percent range of 0 to 91.0
+###want log biomass tick values to = 0, 30, 60, 90
+##this equals centered biomass values of:
+0 - mean(bio_veg$non.native_forest_percent) #-45.92099
+30 - mean(bio_veg$non.native_forest_percent) # -15.92099
+60 - mean(bio_veg$non.native_forest_percent) #14.07901
+90 - mean(bio_veg$non.native_forest_percent) #44.07901
+#100 - mean(bio_veg$non.native_forest_percent) # 54.07901
+
+sb_bio_veg_plot<-
+  bio_veg %>%
+  select(nonative_forest_c, logbiokgha)%>%
+  ggplot(aes(x = nonative_forest_c, y = logbiokgha)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+    geom_ribbon(data = me_sb_bio_veg, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_sb_bio_veg, aes(x = nonative_forest_c, y = estimate__), color = "#0C7BDC", lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-45.92099, -15.92099, 14.07901, 44.07901), 
+                      labels=c("-45.92099" = "0", "-15.92099" = "30", "14.07901" = "60", "44.07901" = "90")) +
+  xlab("% Non-native forest")+
+  ylab("Seabird biomass (log kg ha)") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sb_bio_veg_plot #this is plot with partialized residuals
+
+
+sb_bio_rat_plot<-
+  bio_rat %>%
+  select(rat_status, logbiokgha)%>%
+  ggplot(aes(x = rat_status, y = logbiokgha)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#0C7BDC", fill = "#0C7BDC", size = 3) + #, size = .8
+  geom_point(data = me_sb_bio_rat, aes(x = rat_status, y = estimate__), size = 5, alpha = 1, color = "#0C7BDC", fill = "#0C7BDC", pch = 22) + 
+  geom_errorbar(data = me_sb_bio_rat, aes(ymin = lower__, ymax=upper__, width = .2), color = "#0C7BDC") +
+  theme_bw()+
+  xlab("Rat status")+
+  ylab("Seabird biomass (log kg ha)") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sb_bio_rat_plot
+
+
+
+##richness
+sb_rich_veg_plot<-
+  rich_veg %>%
+  select(nonative_forest_c, richness)%>%
+  ggplot(aes(x = nonative_forest_c, y = richness)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+    geom_ribbon(data = me_sb_rich_veg, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey")+
+    geom_line(data = me_sb_rich_veg, aes(x = nonative_forest_c, y = estimate__), color = "#FFC20A", lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-45.92099, -15.92099, 14.07901, 44.07901), 
+                      labels=c("-45.92099" = "0", "-15.92099" = "30", "14.07901" = "60", "44.07901" = "90")) +
+  xlab("% Non-native forest")+
+  ylab("Seabird species richness") + 
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+     #           text = element_text(size = 24),
+        legend.position='none')
+sb_rich_veg_plot
+
+
+sb_rich_rat_plot<-
+  rich_rat %>%
+  select(rat_status, richness)%>%
+  ggplot(aes(x = rat_status, y = richness)) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, color = "#FFC20A", fill = "#FFC20A", size = 3) + #, size = .8
+  geom_point(data = me_sb_rich_rat, aes(x = rat_status, y = estimate__), size = 5, alpha = 1, color = "#FFC20A", fill = "#FFC20A", pch = 22) + 
+  geom_errorbar(data = me_sb_rich_rat, aes(ymin = lower__, ymax=upper__, width = .2), color = "#FFC20A") +
+  theme_bw()+
+   xlab("Rat status")+
+  ylab("Seabird species richness") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+          #      text = element_text(size = 24),
+        legend.position='none')
+sb_rich_rat_plot
+
+
+```
+
+
+
+
+#re-do plots with different colors, save all together
+```{r}
+#posterior distn plot----
+#full model----
+
+cols <- c("rats" = "#E1BE6A", "non-native forest" = "#40B0A6")
+
+seabird_bio_div_posterior_plots2<-
+  ggplot(as_draws_df(seabird_bio_div_mod_cs_cor2)) +
+   geom_vline(xintercept=0, lty=2, alpha = .5)+
+###Posterior densities:   
+  stat_halfeye(aes(x = b_logbiokgha_rat_statusinfested,  y = 5,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_logbiokgha_nonative_forest_cs,  y = 4.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+
+    stat_halfeye(aes(x = b_richness_rat_statusinfested,  y = 4,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  stat_halfeye(aes(x=b_richness_nonative_forest_cs,  y = 3.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0, fatten_point = 2, slab_alpha = .6) + 
+  
+##Points: 
+   stat_halfeye(aes(x = b_logbiokgha_rat_statusinfested,  y = 5,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2,  slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_logbiokgha_nonative_forest_cs,  y = 4.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+
+    stat_halfeye(aes(x = b_richness_rat_statusinfested,  y = 4,  fill= "rats", color= "rats"), 
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+  stat_halfeye(aes(x=b_richness_nonative_forest_cs,  y = 3.97,  fill= "non-native forest", color= "non-native forest"),
+               point_interval=median_hdi, .width=c(.8,.5),  alpha = 0.85, fatten_point = 2, slab_alpha = 0) + 
+#design:  
+ xlab("")+
+  ylab("")+
+ scale_y_continuous(breaks=seq(4,5, by=1), labels=c("4"= "seabird\nrichness", "5" = "seabird\nbiomass")) +
+theme_bw() + 
+  scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  labs(color = "", fill = "")+
+  theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(), 
+        axis.ticks.y = element_blank(),
+        text = element_text(size = 14),
+       legend.position = c(.82,.95),
+       # legend.position = "none",  
+        rect = element_rect(fill = "transparent"),  
+        plot.background = element_rect(fill = "transparent", color = NA))
+
+seabird_bio_div_posterior_plots2
+
+
+###marginal effect plots
+sb_bio_veg_plot2<-
+  bio_veg %>%
+  select(nonative_forest_c, logbiokgha)%>%
+  ggplot(aes(x = nonative_forest_c, y = logbiokgha, color = "non-native forest", fill = "non-native forest")) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, size = 3) + #, size = .8
+    geom_ribbon(data = me_sb_bio_veg, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey", linetype = "blank")+
+    geom_line(data = me_sb_bio_veg, aes(x = nonative_forest_c, y = estimate__), lwd = 1.2) +
+   scale_x_continuous(
+     breaks=c(-45.92099, -15.92099, 14.07901, 44.07901), 
+                      labels=c("-45.92099" = "0", "-15.92099" = "30", "14.07901" = "60", "44.07901" = "90")) +
+   scale_y_continuous(breaks=c(-2, 0, 2, 4, 6, 8, 10), limits=c(-3.5,10))+
+  xlab(" ")+
+  ylab(" ") + 
+  theme_bw()+
+   scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sb_bio_veg_plot2 #this is plot with partialized residuals
+
+
+sb_bio_rat_plot2<-
+  bio_rat %>%
+  select(rat_status, logbiokgha)%>%
+  ggplot(aes(x = rat_status, y = logbiokgha, color = "rats", fill = "rats")) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, size = 3) + #, size = .8
+  geom_point(data = me_sb_bio_rat, aes(x = rat_status, y = estimate__), size = 5, alpha = 1, pch = 22) + 
+  geom_errorbar(data = me_sb_bio_rat, aes(ymin = lower__, ymax=upper__, width = .2)) +
+    scale_y_continuous(breaks=c(-2, 0, 2, 4, 6, 8, 10), limits=c(-3.5,10))+
+  theme_bw()+
+   scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  xlab(" ")+
+  ylab("Seabird biomass (log kg ha)") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+    #            text = element_text(size = 24),
+        legend.position='none')
+sb_bio_rat_plot2
+
+
+
+##richness
+sb_rich_veg_plot2<-
+  rich_veg %>%
+  select(nonative_forest_c, richness)%>%
+  ggplot(aes(x = nonative_forest_c, y = richness,  color = "non-native forest", fill = "non-native forest")) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4, size = 3) + #, size = .8
+    geom_ribbon(data = me_sb_rich_veg, aes(ymin = lower__, ymax=upper__), alpha = .2, fill = "grey", linetype = "blank")+
+    geom_line(data = me_sb_rich_veg, aes(x = nonative_forest_c, y = estimate__), lwd = 1.2) +
+  scale_x_continuous(
+     breaks=c(-45.92099, -15.92099, 14.07901, 44.07901), 
+                      labels=c("-45.92099" = "0", "-15.92099" = "30", "14.07901" = "60", "44.07901" = "90")) +
+      scale_y_continuous(breaks=c(2, 4, 6, 8, 10), limits=c(2,11))+
+  xlab("% Non-native forest")+
+  ylab(" ") + 
+   scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+  theme_bw()+
+    guides(size = "none", colour = "none",  fill = guide_legend(title="Confidence level")) + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+     #           text = element_text(size = 24),
+        legend.position='none')
+sb_rich_veg_plot2
+
+
+sb_rich_rat_plot2<-
+  rich_rat %>%
+  select(rat_status, richness)%>%
+  ggplot(aes(x = rat_status, y = richness, color = "rats", fill = "rats")) +
+     geom_jitter(width=.07, height = 0, alpha = 0.4,  size = 3) + #, size = .8
+  geom_point(data = me_sb_rich_rat, aes(x = rat_status, y = estimate__), size = 5, alpha = 1, pch = 22) + 
+  geom_errorbar(data = me_sb_rich_rat, aes(ymin = lower__, ymax=upper__, width = .2)) +
+      scale_y_continuous(breaks=c(2, 4, 6, 8, 10), limits=c(2,11))+
+  theme_bw()+
+   scale_fill_manual(values = cols, name = "")+
+    scale_colour_manual(values = cols, name = "")+
+   xlab("Rat status")+
+  ylab("Seabird species richness") + 
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+          #      text = element_text(size = 24),
+        legend.position='none')
+sb_rich_rat_plot2
+
+
+
+###arrange:-----
+sb_bio_div_mod_plots2<-
+  ggdraw() + 
+  draw_plot(seabird_bio_div_posterior_plots2, x = 0.1, y = .66, width = .8, height = .33) +
+  draw_plot(sb_bio_rat_plot2, x = 0, y = 0.33, width = .5, height = .33) +
+  draw_plot(sb_bio_veg_plot2, x = 0.5, y = 0.33, width = .5, height = .33)+
+  draw_plot(sb_rich_rat_plot2,x = 0, y = 0, width = .5, height = .33) +
+  draw_plot(sb_rich_veg_plot2, x = 0.5, y = 0, width = .5, height = .33)
+  
+
+
+sb_bio_div_mod_plots2<-
+  ggdraw() + 
+  draw_plot(seabird_bio_div_posterior_plots2, x = 0.1, y = .6, width = .8, height = .4) +
+  draw_plot(sb_bio_rat_plot2, x = 0, y = 0.3, width = .5, height = .3) +
+  draw_plot(sb_bio_veg_plot2, x = 0.5, y = 0.3, width = .5, height = .3)+
+  draw_plot(sb_rich_rat_plot2,x = 0, y = 0, width = .5, height = .3) +
+  draw_plot(sb_rich_veg_plot2, x = 0.5, y = 0, width = .5, height = .3)
+sb_bio_div_mod_plots2
+
+
+
+#ggsave(filename = "sb_bio_div_mod_plots_combined2.pdf", 
+#       plot = sb_bio_div_mod_plots2,
+#       width = 8,
+#       height = 8,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```
+
+
+#save plots seperately -  Fig 2,  Fig S3
+```{r}
+
+#posterior plot (fig s3):
+seabird_bio_div_posterior_plots2
+
+#ggsave(filename = "stressor_posterior_plot.pdf", 
+#      plot = seabird_bio_div_posterior_plots2,
+#       width = 6,
+#       height = 4,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+#conditional effects (fig 2):
+
+stressor_cond_plots<-
+  plot_grid(sb_bio_rat_plot2, sb_bio_veg_plot2,sb_rich_rat_plot2, sb_rich_veg_plot2,
+           ncol=2, align = "hv")
+
+stressor_cond_plots
+
+
+#ggsave(filename = "stressor_cond_plots.pdf", 
+#      plot = stressor_cond_plots,
+#       width = 8,
+#       height = 6,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+
+```
+

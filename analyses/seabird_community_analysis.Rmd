@@ -1,0 +1,394 @@
+---
+title: "seabird_community_analysis"
+author: "CEB"
+date: "01/19/2022"
+output: html_document
+---
+
+#load packages
+```{r}
+library(tidyverse)
+
+
+#cor plots:
+library(corrplot) #for checking correlations
+library(ggcorrplot2) ##for customizing corrplots:
+#note: downloaded using:
+#if (!requireNamespace("devtools")) install.packages("devtools")
+#devtools::install_github("caijun/ggcorrplot2")
+##info: https://github.com/caijun/ggcorrplot2
+
+
+#pca:
+library(FactoMineR) #for PCA
+library(factoextra) #for PCA
+
+#imputing missing data (as per warning message from PCA)
+library(missMDA)
+
+```
+
+
+###load seabird data
+```{r}
+load("seabird_comm_data_2021_09_30.Rdata")
+load("seabird_comm_data_REDUCED_2021_09_30.Rdata")
+
+
+#files:
+##seabird/site data:
+#seabird_dat_ch_2015_meta
+
+#with calculations:
+#seabird_dat_ch_2015_bio
+
+#by island (but no diversity stats):
+#seabird_dat_ch_2015_bio_isl
+
+#by species with island totals:
+#seabird_chagos_2015_dat_meta
+
+#by island, wide with diversity data:
+#ch_2015_div
+
+##seabird/site data wide:
+#ch_15_bio_wide #biomass (prop year kg/ha) and breeding pairs (#/ha)
+
+#isotope data: 
+#iso_dat_ch_rl
+
+##isotope plus seabird data:
+#iso_bio_ch
+
+##isotope plus diversity data
+#ch_iso_div_15
+```
+
+
+##make correlation plots with species and rich/bio----
+```{r}
+
+str(ch_2015_div)
+
+##determine order for richness and biomass (descending order of correlations):
+rich_cor_mat<-
+  as.data.frame(cor(ch_2015_div[,21:36]))%>% 
+  select(richness)%>% 
+  arrange(desc(richness))
+
+rich_cor_mat  
+  
+##order for richness:
+ch_bp_wide_2015_div_rord<-
+  ch_2015_div%>% 
+  relocate(richness, Breeding_Pairs_ha_Onychoprion.anaethetus, Breeding_Pairs_ha_Fregata.minor,  Breeding_Pairs_ha_Anous.stolidus,
+           Breeding_Pairs_ha_Anous.tenuirostris, Breeding_Pairs_ha_Sula.sula, Breeding_Pairs_ha_Fregata.ariel,
+           Breeding_Pairs_ha_Sula.leucogaster, Breeding_Pairs_ha_Thalasseus.bergii,
+           Breeding_Pairs_ha_Onychoprion.fuscatus, Breeding_Pairs_ha_Ardenna.pacifica, Breeding_Pairs_ha_Puffinus.bailloni,
+           Breeding_Pairs_ha_Gygis.alba, Breeding_Pairs_ha_Sterna.sumatrana, Breeding_Pairs_ha_Phaethon.lepturus, 
+           Breeding_Pairs_ha_Sterna.dougallii)%>% 
+rename_all(~ sub("Breeding_Pairs_ha_", "", .x))%>% 
+  rename_with( ~ gsub(".", " ", .x, fixed = TRUE))
+  
+#abbreviate species:
+ch_bp_wide_2015_div_rord<-
+   ch_bp_wide_2015_div_rord %>% 
+    rename_all(~paste(str_sub(., 1,1), str_extract(., '\\b\\w+$')))
+
+
+##order for biomass:
+bio_cor_mat<-
+  as.data.frame(cor(ch_2015_div[,c(5,21:35)]))%>% 
+  select(sum_bio_prop_year_kg_ha)%>% 
+  arrange(desc(sum_bio_prop_year_kg_ha))
+bio_cor_mat
+
+
+ch_bp_wide_2015_div_bord<-
+  ch_2015_div%>% 
+  relocate(sum_bio_prop_year_kg_ha, Breeding_Pairs_ha_Onychoprion.fuscatus,   Breeding_Pairs_ha_Gygis.alba,  Breeding_Pairs_ha_Thalasseus.bergii,
+           Breeding_Pairs_ha_Anous.stolidus,
+        Breeding_Pairs_ha_Sula.sula,Breeding_Pairs_ha_Fregata.minor, Breeding_Pairs_ha_Sterna.sumatrana,  Breeding_Pairs_ha_Onychoprion.anaethetus, Breeding_Pairs_ha_Fregata.ariel, Breeding_Pairs_ha_Sula.leucogaster,  Breeding_Pairs_ha_Anous.tenuirostris,  
+           Breeding_Pairs_ha_Ardenna.pacifica, Breeding_Pairs_ha_Puffinus.bailloni,   Breeding_Pairs_ha_Sterna.dougallii,
+           Breeding_Pairs_ha_Phaethon.lepturus)%>% 
+  rename(biomass = sum_bio_prop_year_kg_ha)%>% 
+rename_all(~ sub("Breeding_Pairs_ha_", "", .x))%>% 
+  rename_with( ~ gsub(".", " ", .x, fixed = TRUE))
+
+#abbreviate species:
+ch_bp_wide_2015_div_bord<-
+   ch_bp_wide_2015_div_bord %>% 
+    rename_all(~paste(str_sub(., 1,1), str_extract(., '\\b\\w+$')))
+
+```
+
+
+##save plots
+```{r}
+##save plots (run all together) because can't easily export corrplots otherwise:----
+#pdf(file="corrplots_jan2022.pdf",onefile=T, 
+#    useDingbats=FALSE)
+par(mfrow=c(1,2))
+
+corrplot(cor(ch_bp_wide_2015_div_bord[,1:16])[2:16,1, drop=FALSE],  method="circle", 
+         tl.col="black", cl.pos='n', col.lim=c(-1,1), cl.length=9, cl.ratio=1,tl.srt = 0,
+         col=brewer.pal(n = 10, name="RdYlBu"), addCoef.col = "gray", addCoefasPercent = TRUE)
+corrplot(cor(ch_bp_wide_2015_div_rord[,1:16])[2:16,1, drop=FALSE],  method="circle", 
+         tl.col="black", cl.pos='n', col.lim=c(-1,1), cl.length=9, cl.ratio=1,tl.srt = 0, 
+         col=brewer.pal(n = 10, name="RdYlBu"), addCoef.col = "gray", addCoefasPercent = TRUE) #,,  add = TRUE
+#dev.off()
+
+
+#make placeholder plot to combine with FD plots:
+library(ggcorrplot2)
+library(ggforce)
+corr_plot_test<-ggcorrplot(cor(ch_bp_wide_2015_div_rord[,1:16])[2:16,1, drop=FALSE],  method="circle")
+corr_plot_test
+```
+
+
+
+##corr plots with reduced data:
+```{r}
+##determine order for richness and biomass (descending order of correlations:
+cor(ch_2015_div_R3[,19:32])
+
+##order for richness:
+ch_bp_wide_2015_div_rord_R3<-
+  ch_2015_div_R3%>% 
+  relocate(richness, Breeding_Pairs_ha_Onychoprion.anaethetus, Breeding_Pairs_ha_Fregata.minor,  Breeding_Pairs_ha_Anous.stolidus,
+           Breeding_Pairs_ha_Anous.tenuirostris, Breeding_Pairs_ha_Sula.sula, Breeding_Pairs_ha_Fregata.ariel,
+           Breeding_Pairs_ha_Sula.leucogaster, Breeding_Pairs_ha_Thalasseus.bergii,
+           Breeding_Pairs_ha_Onychoprion.fuscatus, Breeding_Pairs_ha_Ardenna.pacifica, Breeding_Pairs_ha_Puffinus.bailloni,
+           Breeding_Pairs_ha_Gygis.alba, Breeding_Pairs_ha_Sterna.sumatrana )%>% 
+rename(biomass = log_bio_kg_ha)%>% 
+rename_all(~ sub("Breeding_Pairs_ha_", "", .x))%>% 
+  rename_with( ~ gsub(".", " ", .x, fixed = TRUE))
+
+
+
+
+##order for biomass:
+cor(ch_2015_div_R3[,c(5,19:31)])
+
+ch_bp_wide_2015_div_bord_R3<-
+  ch_2015_div_R3%>% 
+   relocate(sum_bio_prop_year_kg_ha, Breeding_Pairs_ha_Onychoprion.fuscatus,   Breeding_Pairs_ha_Gygis.alba,  Breeding_Pairs_ha_Thalasseus.bergii,
+           Breeding_Pairs_ha_Anous.stolidus,
+        Breeding_Pairs_ha_Sula.sula,Breeding_Pairs_ha_Fregata.minor, Breeding_Pairs_ha_Sterna.sumatrana,  Breeding_Pairs_ha_Onychoprion.anaethetus, Breeding_Pairs_ha_Fregata.ariel, Breeding_Pairs_ha_Sula.leucogaster,  Breeding_Pairs_ha_Anous.tenuirostris,  
+           Breeding_Pairs_ha_Ardenna.pacifica, Breeding_Pairs_ha_Puffinus.bailloni)%>% 
+rename(biomass = sum_bio_prop_year_kg_ha)%>% 
+rename_all(~ sub("Breeding_Pairs_ha_", "", .x))%>% 
+  rename_with( ~ gsub(".", " ", .x, fixed = TRUE))
+
+
+###now cusotmize plots:
+corrplot(cor(ch_bp_wide_2015_div_rord_R3[,1:14])[2:14,1, drop=FALSE],  method="circle", 
+         tl.col="black", cl.pos='r', col.lim=c(-1,1), cl.length=9, cl.ratio=1,
+         col=brewer.pal(n = 10, name="RdYlBu"))
+
+corrplot(cor(ch_bp_wide_2015_div_bord_R3[,1:14])[2:14,1, drop=FALSE],  method="circle", 
+         tl.col="black", cl.pos='r', col.lim=c(-1,1), cl.length=9, cl.ratio=1,
+         col=brewer.pal(n = 10, name="RdYlBu"))
+
+###IDENTICAL ORDER TO FULL DATASET, just removes last two species....
+```
+
+
+
+####-----------------PCA-----------------
+
+#first load and set-up data
+```{r}
+##super useful website: http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
+
+load("ch_2015_sb_veg_2021_09_30.Rdata")
+#ch_2015_sb_veg, ch_2015_sb_veg_cs, 
+#     ch_2015_bio_div_veg_R1, ch_2015_bio_div_veg_R2, ch_2015_bio_div_veg_R3,
+
+str(ch_2015_sb_veg_cs)
+
+str(ch_2015_div) #breeding pair density, diversity metrics, island level
+str(ch_iso_div_15) # need to get mean/median N15 per sample type, per island
+
+iso_summary<-
+  ch_iso_div_15%>% 
+  group_by(Island, Sample_type)%>% 
+  summarise(mean_n15 = mean(N15),
+            median_n15 = median(N15))
+
+##change to wide:
+iso_summary_wide<-
+  iso_summary %>% 
+  pivot_wider(id_cols = Island, names_from = Sample_type, values_from = median_n15)
+
+
+ch_bp_iso_sum_mat_B<-left_join(ch_2015_sb_veg_cs, iso_summary_wide, by = "Island")
+ch_bp_iso_sum_mat_C<-left_join(ch_bp_iso_sum_mat_B, select(ch_2015_div, c(Island, Breeding_Pairs_ha_Ardenna.pacifica:Breeding_Pairs_ha_Gygis.alba)), 
+                               by = "Island")
+str(ch_bp_iso_sum_mat_C)  
+
+##add fish biomass
+load("fish_data.Rdata")
+
+#sum by species, transect
+fish_dat_island<-
+    fish_dat_raw %>% 
+ # select(Year, Atoll, Island, Treatment, Biomass_kg_h)%>% 
+  group_by(Island) %>% 
+  summarize(avg_fish_bio_kg_ha = sum(Biomass_kg_h)/4,
+            log_avg_fish_bio = log(avg_fish_bio_kg_ha),
+            sum_fish_bio_kg_ha = sum(Biomass_kg_h), 
+            log_sum_fish_bio = log(sum_fish_bio_kg_ha))
+fish_dat_island
+
+fish_dat_island_rl<-
+  fish_dat_island%>% 
+  mutate(Island = recode_factor(Island, "Eagle"  ="Eagle Island", "Grande_Ile_Coquillage"= "Grande Ile Coquillage",  "Grande_Ile_Mapou" ="Grande Ile Mapou" ,    
+"PB_Ile_Anglaise"   = "Ile Anglaise_PB" ,     "Sal_Ile_Anglaise"   =  "Ile Anglaise_SAL"  ,    "Ile_de_la_Passe" = "Ile de la Passe",     "Ile_Fouquet"   =  "Ile Fouquet" ,  "Ile_Longue"  ="Ile Longue"   ,        "Ile_Poule"    =  "Ile Poule" ,  "Middle_Brother"  =   "Middle Brother"  ,    "Nelson_Island"   =  "Nelson's Island" ,   "South_Brother"   =   "South Brother"))%>% 
+  ungroup()
+
+
+ch_bp_iso_sum_mat_C2<-left_join(ch_bp_iso_sum_mat_C, fish_dat_island_rl, 
+                               by = "Island")
+str(ch_bp_iso_sum_mat_C2)  
+
+  
+ch_bp_iso_sum_mat_C_red_for_pca<-
+  ch_bp_iso_sum_mat_C2%>% 
+  select(-c( sum_bio_prop_year_kg_ha,  nonative_forest_cs, island_size_cs, rich_cs, Island, Atoll, avg_fish_bio_kg_ha, sum_fish_bio_kg_ha, log_sum_fish_bio))%>% 
+rename_all(~ sub("Breeding_Pairs_ha_", "", .x))%>% 
+  rename_with( ~ gsub(".", " ", .x, fixed = TRUE))%>% 
+  rename("fish biomass" = "log_avg_fish_bio",
+        "non-native forest" =  "non native_forest_percent",
+        "island size" =  "island_size_ha" ,
+       "rats" =   "rat_status",
+         "seabird richness" = "richness",
+      "seabird biomass" =    "log_bio_kg_ha")
+str(ch_bp_iso_sum_mat_C_red_for_pca)
+
+##log seabird data: 
+ch_bp_iso_sum_mat_C_red_for_pca_log<-
+  ch_bp_iso_sum_mat_C_red_for_pca %>%
+  mutate_at(vars("Ardenna pacifica":"Gygis alba"), list(~log(1 + .)))
+
+```
+
+
+
+###run PCA on full data:
+```{r}
+
+#impute the missing data
+ ## Imputation
+res.comp_log <- imputePCA(ch_bp_iso_sum_mat_C_red_for_pca_log,ncp=2, quanti.sup=c(2:11, 27), quali.sup = 1)
+
+## A PCA can be performed on the imputed data 
+pca_bp_log_dens_imp <- PCA(res.comp_log$completeObs, scale.unit=TRUE, graph=FALSE, quanti.sup=c(2:11, 27), quali.sup = 1)
+dimdesc(pca_bp_log_dens_imp, axes=1:4, proba = 0.5)
+summary(pca_bp_log_dens_imp)
+
+
+##get quality of representations and cors for supplemental variables:
+pca_bp_log_dens_imp$quanti.sup$cos2
+pca_bp_log_dens_imp$quanti.sup$cor
+pca_bp_log_dens_imp$quali.sup$cos2
+
+
+##get quality of representations, cors, and contributions for species:
+pca_bp_log_dens_imp$var$cos2
+pca_bp_log_dens_imp$var$cor
+pca_bp_log_dens_imp$var$contrib
+
+#Visualize:
+fviz_contrib(pca_bp_log_dens_imp, choice = "var", axes = 1, top = 10) 
+fviz_cos2(pca_bp_log_dens_imp, choice = "var", axes = 1, top = 10) 
+
+
+##save plot-----
+pca_plot<-fviz_pca_var(pca_bp_log_dens_imp, col.var = "contrib",  geom.var = c("point", "text"), repel=TRUE, gradient.cols =  "Dark2", labelsize=3,#brewer.pal(n = 5, name="RdYlBu"), #,# #brewer.pal(n = 9, name="Blues"),
+                invisible = c("ind","quanti.sup"))+ #, alpha = "contrib"
+   theme_bw()+
+  ylab("PCA2 (21.1% of variance)")+
+  xlab("PCA1 (42.1% of variance)")+
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+          plot.title = element_blank(),
+        legend.position=c(0.1, .81))
+ 
+pca_plot <- fviz_add(pca_plot, pca_bp_log_dens_imp$quanti.sup$coord, color="#666666", alpha.var = .1, geom=c("arrow", "text"), labelsize=3, repel=TRUE, linetype=1) #, alpha = "cos2"
+  pca_plot <- fviz_add(pca_plot, -pca_bp_log_dens_imp$quali.sup$eta2, color="#666666", alpha.var = .1, geom=c("arrow", "text"), labelsize=3, repel=TRUE, linetype=1) #
+
+  pca_plot
+
+#ggsave(filename = "plot_pca.pdf", 
+#       plot = pca_plot,
+#       width = 7,
+#       height = 7,
+#       units = "in",
+#       dpi = 300,
+#       family = "sans",
+#       useDingbats=FALSE)
+
+```
+
+
+
+###same but with reduced data
+```{r}
+###-----same but with reduced data-----------------------
+ch_bp_iso_sum_mat_B2<-left_join(ch_2015_bio_div_veg_R3, iso_summary_wide, by = "Island")
+ch_bp_iso_sum_mat_C2<-left_join(ch_bp_iso_sum_mat_B2, 
+                                select(ch_15_bio_wide_R3, c(Island, Breeding_Pairs_ha_Ardenna.pacifica:Breeding_Pairs_ha_Gygis.alba)), 
+                               by = "Island")
+str(ch_bp_iso_sum_mat_C2)  
+  
+ch_bp_iso_sum_mat_C2_red_for_pca<-
+  ch_bp_iso_sum_mat_C2%>% 
+  select(-c(sum_bio_prop_year_kg_ha, nonative_forest_cs, island_size_cs, rich_cs, Island, Atoll, logbio_cs, logbio_c, rich_c))
+
+pca_bp_dens2 <- PCA(ch_bp_iso_sum_mat_C2_red_for_pca, scale.unit=TRUE, graph=TRUE, quanti.sup=2:11, quali.sup = 1)
+summary(pca_bp_dens2)
+
+dimdesc(pca_bp_dens2, axes=1:4, proba = 0.5)
+
+##
+var <- get_pca_var(pca_bp_dens2)
+var$cos2
+var$cor
+var$contrib
+
+# Contributions of variables to PC1
+fviz_contrib(pca_bp_dens2, choice = "var", axes = 1, top = 10) 
+fviz_contrib(pca_bp_dens2, choice = "var", axes = 2, top = 10) 
+fviz_contrib(pca_bp_dens2, choice = "var", axes = 3, top = 10) 
+
+
+#cos2
+fviz_cos2(pca_bp_dens2, choice = "var", axes = 1, top = 10) 
+
+
+#var = bird species, ind = sites
+fviz_pca_biplot(pca_bp_dens2, axes=c(1,2),
+                geom.ind = c("point", "text"), geom.var=c("text"),
+                pointsize=3, alpha.ind = 0.5,
+                repel=TRUE, label="var",
+                col.ind = "cos2",
+                col.var = "contrib", gradient.cols = "Dark2") 
+
+
+p2<-fviz_pca_var(pca_bp_dens2, col.var = "contrib",  geom.var = c("point", "text"), repel=TRUE, gradient.cols =  "Dark2", labelsize=3,#brewer.pal(n = 5, name="RdYlBu"), #,# #brewer.pal(n = 9, name="Blues"),
+                invisible = c("ind","quanti.sup"))+ #, alpha = "contrib"
+   theme_bw()+
+    theme(panel.grid.major = element_blank(), # remove gridlines
+        panel.grid.minor = element_blank(), #remove gridlines
+        strip.background = element_blank(),
+        title=element_blank())
+  p2 <- fviz_add(p2, pca_bp_dens2$quanti.sup$coord, color="#666666",geom=c("arrow", "text"), labelsize=3, repel=TRUE, linetype=1) #, alpha = "cos2"
+  p2 <- fviz_add(p2, pca_bp_dens2$quali.sup$coord, color="#666666",geom=c("text"), labelsize=3, repel=TRUE, linetype=1) #, alpha = "cos2"
+p2
+##LOOKS ALMOST IDENTICAL TO ABOVE, but without the 2 additional species
+
+```
+

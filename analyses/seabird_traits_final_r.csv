@@ -1,0 +1,16 @@
+Scientific_name,Common_name,Body_mass_cont,Body_mass_log_cont,Breeding_duration_ord,Site_fidelity_ordered,Specific_nesting_habitat_cat,Foraging_habitat_ordered,Foraging_duration_ordered,Fish_diet_percent,Foraging_on_or_near_surface_percent
+Sterna.sumatrana,Black-naped tern,109,4.691347882,1_seasonal,4_Nomadic,ground,2_Neritic,1_short_foray,90,20
+Sterna.dougallii,Roseate tern,113,4.727387819,1_seasonal,4_Nomadic,ground,3_Neritic_Mid,1_short_foray,90,0
+Gygis.alba,Fairy tern/Common white tern,117,4.762173935,2_year-round,4_Nomadic,trees_shrubs,1_All_over,1_short_foray,80,100
+Onychoprion.fuscatus,Sooty tern,183,5.209486153,1_seasonal,3_Cluster_faithful,ground,6_Pelagic,2_one_overnight,70,70
+Thalasseus.bergii,Crested tern,360,5.886104031,1_seasonal,4_Nomadic,ground,3_Neritic_Mid,1_short_foray,70,50
+Anous.stolidus,Brown noddy,189,5.241747015,2_year-round,2_Island_faithful,ground_trees,5_Mid_Pelagic,2_one_overnight,70,100
+Anous.tenuirostris,Lesser noddy,109,4.691347882,2_year-round,1_Site_faithful,trees,2_Neritic,1_short_foray,70,100
+Ardenna.pacifica,Wedge-tailed shearwater,435,6.075346031,1_seasonal,2_Island_faithful,burrows_cavities,6_Pelagic,2_one_overnight,70,50
+Onychoprion.anaethetus,Bridled tern,145,4.976733742,1_seasonal,2_Island_faithful,ground,4_Mid_distance,1_short_foray,70,20
+Phaethon.lepturus,White-tailed tropicbird,315,5.752572639,1_seasonal,2_Island_faithful,tree_cavities,6_Pelagic,2_one_overnight,70,20
+Sula.leucogaster,Brown booby,1363,7.217443432,2_year-round,1_Site_faithful,ground,4_Mid_distance,1_short_foray,70,0
+Fregata.minor,Great frigatebird,1314,7.180831199,2_year-round,2_Island_faithful,trees_shrubs,6_Pelagic,2_one_overnight,60,80
+Sula.sula,Red-footed booby,975,6.882437471,2_year-round,1_Site_faithful,trees_shrubs,6_Pelagic,2_one_overnight,50,0
+Fregata.ariel,Lesser frigatebird,804,6.689599269,2_year-round,2_Island_faithful,trees_shrubs,6_Pelagic,2_one_overnight,40,80
+Puffinus.bailloni,Tropical shearwater,191,5.252273428,1_seasonal,2_Island_faithful,burrows_cavities,6_Pelagic,2_one_overnight,40,20

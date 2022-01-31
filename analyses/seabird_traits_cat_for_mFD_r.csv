@@ -1,0 +1,9 @@
+trait_name,trait_type
+Body_mass_log_cont,Q
+Breeding_duration_ord,O
+Site_fidelity_ordered,O
+Specific_nesting_habitat_cat,N
+Foraging_habitat_ordered,O
+Foraging_duration_ordered,O
+Fish_diet_percent,Q
+Foraging_on_or_near_surface_percent,Q

@@ -1,0 +1,121 @@
+---
+title: "data_prep_fish_surveys"
+author: "CEB"
+date: "10/7/2021"
+output: html_document
+---
+
+###----------Data prep for surveys--------
+
+##load packages
+```{r}
+library(tidyverse)
+```
+
+
+#load data (UVC and a, b values to convert to biomass)
+```{r}
+
+###uvc:
+fish_dat_15 <- read.csv("Chagos_rats_birds_UVC_data_2015.csv", header=TRUE, stringsAsFactors = TRUE) 
+str(fish_dat_15)
+#metadata: 4 Transects per Island (spread across 3 Atolls) per Year
+##Structure: structural complexity on 0-5 scale
+##Coral_cover: percent cover of hard coral on transect
+##Area: survey area of transect (m^2) - 60 m^2 for Pomacentridae, 150 m^2 for all other families
+##Length: total length of individual, estimated to the nearest cm
+##Abundance: indivduals/hectare
+
+
+###a, b values: 
+chagos_ab<-read.csv('updated_Chagos_fish_2015_2018_2019_traits_ab_full_table.csv')
+str(chagos_ab)
+
+
+#make species format match
+chagos_ab<-
+  chagos_ab %>%
+  mutate(Species = str_replace_all(Species, ' ', '_'),
+         Species=as.factor(Species),
+         Diet = as.factor(Diet)
+)
+  
+  
+##combine species data with survey data
+fish_dat_2<-inner_join(fish_dat_15, select(chagos_ab, Species, Diet, a, b),  by=c("Species")) 
+
+fish_dat_raw<-
+  fish_dat_2  %>%
+  mutate(Biomass_g = a*Length^b,
+         Biomass_kg_h = Biomass_g/Area*10)
+
+str(fish_dat_raw)
+
+```
+
+
+##sum by transect, island
+```{r}
+###by transect, island year
+fish_bio_trans<-
+  fish_dat_raw %>% 
+  group_by(Year, Atoll, Island, Treatment, Transect, Structure, Coral_cover) %>% 
+  summarize(sum_fish_bio_kg_ha = sum(Biomass_kg_h))
+fish_bio_trans
+
+```
+
+
+#combine with seabird data
+```{r}
+load("seabird_comm_data_2021_09_30.Rdata")
+str(ch_2015_div)
+
+
+##make island names match:
+#check island levels
+levels(fish_bio_trans$Island)
+levels(ch_2015_div$Island)
+
+#change island levels to make match, so then can combine: 
+fish_bio_trans_rl<-
+  fish_bio_trans%>% 
+  mutate(Island = recode_factor(Island, "Eagle"  ="Eagle Island", "Grande_Ile_Coquillage"= "Grande Ile Coquillage",  "Grande_Ile_Mapou" ="Grande Ile Mapou" ,    
+"PB_Ile_Anglaise"   = "Ile Anglaise_PB" ,     "Sal_Ile_Anglaise"   =  "Ile Anglaise_SAL"  ,    "Ile_de_la_Passe" = "Ile de la Passe",     "Ile_Fouquet"   =  "Ile Fouquet" ,  "Ile_Longue"  ="Ile Longue"   ,        "Ile_Poule"    =  "Ile Poule" ,  "Middle_Brother"  =   "Middle Brother"  ,    "Nelson_Island"   =  "Nelson's Island" ,   "South_Brother"   =   "South Brother"))%>% 
+  ungroup()
+
+
+ch_2015_div_fish<-inner_join(select(fish_bio_trans_rl, -Atoll), ch_2015_div,  by=c("Island")) 
+ch_2015_div_fish
+
+str(ch_2015_div_fish)
+
+```
+
+#combine with reduced seabird data
+```{r}
+load("seabird_comm_data_REDUCED_2021_09_30.Rdata")
+
+ch_2015_div_fish_R3<-inner_join(select(fish_bio_trans_rl, -Atoll), ch_2015_div_R3,  by=c("Island")) 
+ch_2015_div_fish_R3
+
+```
+
+
+##save as Rdata files
+```{r}
+
+##fish data non-aggregated (each row = 1 individual)
+fish_dat_raw
+
+##fish data summed by transect: 
+fish_bio_trans
+
+#fish data with seabird data
+ch_2015_div_fish
+ch_2015_div_fish_R3
+
+save(fish_dat_raw, fish_bio_trans,
+     ch_2015_div_fish, ch_2015_div_fish_R3,
+     file = "fish_data.Rdata")
+```

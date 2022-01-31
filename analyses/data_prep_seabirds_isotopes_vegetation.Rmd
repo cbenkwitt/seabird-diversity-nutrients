@@ -1,0 +1,424 @@
+---
+title: "data_prep"
+author: "CEB"
+date: "1/31/2022"
+output: html_document
+---
+
+####---------Load and clean seabird data------------
+
+##load packages
+```{r}
+library(tidyverse)
+library(vegan)
+```
+
+
+##Load files - Chagos 2015 only
+```{r}
+seabird_meta<-read.csv("seabird_meta_chagos_only_2021_09_30.csv", stringsAsFactors = TRUE)
+seabird_dat<-read.csv("seabird_data_combined_chagos_only.csv", stringsAsFactors = TRUE)
+
+str(seabird_meta)
+str(seabird_dat)
+
+```
+
+
+##Combine seabird count data with seabird meta data -  ((breeding pairs x 2 x weight x (months present/12))/ area for annual biomass 
+```{r}
+##first get proportion of year present at each island
+seabird_meta <-
+  seabird_meta %>%
+  mutate(prop_year = months_chagos/12)
+seabird_meta
+
+##change scientific name to match rows in data sheet:
+seabird_meta <-
+  seabird_meta %>%
+  mutate(Scientific.name = str_trim(Scientific.name, side = "both")) %>%  ###remove trailing spaces....
+  mutate(Scientific.name = as.factor(str_replace_all(Scientific.name, " ", ".")))
+
+
+###merge data
+seabird_dat_ch_2015_long<-
+seabird_dat %>% 
+    pivot_longer(c(Ardenna.pacifica:Gygis.alba), names_to="Scientific.name", values_to="Num_Breeding_Pairs")  %>% 
+    mutate(Scientific.name = as.factor(Scientific.name))
+seabird_dat_ch_2015_long
+
+
+seabird_dat_ch_2015_meta <-
+  inner_join(seabird_dat_ch_2015_long, seabird_meta, by = "Scientific.name")
+###okay, now one row per species per island :)
+seabird_dat_ch_2015_meta
+
+```
+
+
+##now do calculations - biomass, per hectare
+```{r}
+
+seabird_dat_ch_2015_bio<-
+  seabird_dat_ch_2015_meta %>% 
+  mutate(Total_Biomass_kg = Num_Breeding_Pairs*2*weight_g/1000) %>% #divide by 1000 because g to kg
+  mutate(Biomass_Prop_Year_kg = Total_Biomass_kg*prop_year)%>% 
+  mutate(Biomass_Prop_Year_kg_ha= (Biomass_Prop_Year_kg)/island_size_ha)%>% 
+  mutate(Breeding_Pairs_Prop_Year = Num_Breeding_Pairs*prop_year)%>% 
+  mutate(Breeding_Pairs_Prop_Year_ha = Breeding_Pairs_Prop_Year/island_size_ha)%>% 
+  mutate(Breeding_Pairs_ha = Num_Breeding_Pairs/island_size_ha)%>% 
+  mutate(Biomass_kg_ha = Total_Biomass_kg/island_size_ha)%>% 
+  select(Region, Atoll, Island, rat_status, island_size_ha,
+         Family, Scientific.name, Num_Breeding_Pairs, 
+         Total_Biomass_kg, Biomass_Prop_Year_kg, Biomass_Prop_Year_kg_ha, 
+         Breeding_Pairs_Prop_Year,  Breeding_Pairs_Prop_Year_ha, 
+         Breeding_Pairs_ha, Biomass_kg_ha) 
+
+seabird_dat_ch_2015_bio
+
+seabird_dat_ch_2015_bio<-
+  seabird_dat_ch_2015_bio%>% 
+      mutate(Biomass_Prop_Year_kg = round(Biomass_Prop_Year_kg, 4)) %>%
+    mutate(Biomass_Prop_Year_kg_ha = round(Biomass_Prop_Year_kg_ha, 4)) %>%
+  mutate(Breeding_Pairs_Prop_Year = round(Breeding_Pairs_Prop_Year, 4)) %>%
+  mutate(Breeding_Pairs_Prop_Year_ha = round(Breeding_Pairs_Prop_Year_ha, 4))  %>%
+  mutate(Breeding_Pairs_ha = round(Breeding_Pairs_ha, 4)) %>%
+mutate(Biomass_kg_ha = round(Biomass_kg_ha, 4)) 
+
+seabird_dat_ch_2015_bio
+  
+```
+
+
+###sum by island
+```{r}
+
+###by island only
+seabird_dat_ch_2015_bio_isl<-
+  seabird_dat_ch_2015_bio %>% 
+  group_by(Island, rat_status) %>% 
+   summarize(sum_bio_total_kg = sum(Total_Biomass_kg),
+             sum_bio_prop_year_kg = sum(Biomass_Prop_Year_kg),
+            sum_bio_prop_year_kg_ha = sum(Biomass_Prop_Year_kg_ha),
+            sum_breeding_pairs = sum(Num_Breeding_Pairs),
+            sum_breeding_pairs_prop_year = sum(Breeding_Pairs_Prop_Year),
+            sum_breeding_pairs_prop_year_ha = sum(Breeding_Pairs_Prop_Year_ha),
+            sum_breeding_pairs_ha = sum(Breeding_Pairs_ha),
+            sum_biomass_kg_ha = sum(Biomass_kg_ha))
+
+seabird_dat_ch_2015_bio_isl
+
+
+###so dataframes for species, island respectively:
+#seabird_dat_ch_2015_bio
+#seabird_dat_ch_2015_bio_isl
+
+
+##add row columns with island totals to species data:
+seabird_chagos_2015_dat_meta<-left_join(seabird_dat_ch_2015_bio, seabird_dat_ch_2015_bio_isl, by = c("Island", "rat_status"))
+seabird_chagos_2015_dat_meta
+
+```
+
+
+##make species data wide
+```{r}
+
+#do biomass and breeding pairs together:
+
+ch_15_bio_wide<-
+  seabird_chagos_2015_dat_meta  %>% 
+  pivot_wider(id_cols =c("Atoll", "Island", "rat_status", "island_size_ha",
+                         "sum_bio_prop_year_kg_ha"), 
+              names_from = "Scientific.name", values_from = c("Biomass_Prop_Year_kg_ha", "Breeding_Pairs_ha"))
+
+
+```
+
+
+###load and combine isotope data
+```{r}
+##combine with isotope data
+##load nutrient data
+iso_dat_ch15<-read.csv("stable_istotope_2015chagos_2020_05_06.csv", stringsAsFactors = TRUE) 
+
+#check island levels
+levels(iso_dat_ch15$Island)
+levels(ch_15_bio_wide$Island)
+
+#change island levels to make match, so then can combine: 
+iso_dat_ch_rl<-
+  iso_dat_ch15%>% 
+  mutate(Island = recode_factor(Island, "Eagle"  ="Eagle Island", "Grande_Ile_Coquillage"= "Grande Ile Coquillage",  
+                                "Grande_Ile_Mapou" ="Grande Ile Mapou" ,    "PB_Ile_Anglaise"   = "Ile Anglaise_PB" ,     
+                                "Sal_Ile_Anglaise"   =  "Ile Anglaise_SAL"  ,    "Ile_de_la_Passe" = "Ile de la Passe",     
+                                "Ile_Fouquet"   =  "Ile Fouquet" ,"Ile_Longue"  ="Ile Longue"   ,        "Ile_Poule"    =  "Ile Poule" ,   
+                                "Middle_Brother"  =   "Middle Brother"  ,    "Nelson_Island"   =  "Nelson's Island" ,   
+                                "South_Brother"   =   "South Brother" ))
+
+
+str(ch_15_bio_wide)
+str(iso_dat_ch_rl)
+
+##combine:
+iso_bio_ch<-inner_join(iso_dat_ch_rl, ch_15_bio_wide,  by=c("Island")) 
+iso_bio_ch
+```
+
+
+
+##get diversity metrics
+```{r}
+
+str(ch_15_bio_wide)
+
+#create data for habitat types:
+sb_types<-
+  ch_15_bio_wide%>% 
+  select(Biomass_Prop_Year_kg_ha_Ardenna.pacifica:Biomass_Prop_Year_kg_ha_Gygis.alba)
+
+ch_2015_div<-
+  ch_15_bio_wide%>% 
+  mutate(richness = specnumber(sb_types)) %>% 
+  mutate(log_bio_kg_ha = log(sum_bio_prop_year_kg_ha),
+         log_rich = log(richness),
+         rich_cs = scale(richness, center = TRUE, scale = TRUE),
+         logbio_cs = scale(log_bio_kg_ha, center = TRUE, scale = TRUE),
+         logrich_cs = scale(log_rich, center = TRUE, scale = TRUE),
+         logbio_c = scale(log_bio_kg_ha, center = TRUE, scale = FALSE),
+         rich_c = scale(richness, center = TRUE, scale = FALSE))
+
+
+#combine data
+ch_iso_div_15<- inner_join(iso_dat_ch_rl, ch_2015_div, by = "Island")
+ch_iso_div_15
+
+```
+
+
+##save as Rdata files
+```{r}
+
+##seabird/site data:
+seabird_dat_ch_2015_meta
+
+#with calculations:
+seabird_dat_ch_2015_bio
+
+#by island (but no diversity stats):
+seabird_dat_ch_2015_bio_isl
+
+#by species with island totals:
+seabird_chagos_2015_dat_meta
+
+#by island, wide with diversity data:
+ch_2015_div
+
+##seabird/site data wide:
+ch_15_bio_wide #biomass (prop year kg/ha) and breeding pairs (#/ha)
+
+#isotope data: 
+iso_dat_ch_rl
+
+##isotope plus seabird data:
+iso_bio_ch
+
+##isotope plus diversity data
+ch_iso_div_15
+
+save(seabird_dat_ch_2015_meta, seabird_dat_ch_2015_bio, seabird_dat_ch_2015_bio_isl, 
+     seabird_chagos_2015_dat_meta, ch_2015_div,
+     ch_15_bio_wide,
+     iso_dat_ch_rl,iso_bio_ch, ch_iso_div_15,
+     file = "seabird_comm_data_2021_09_30.Rdata")
+```
+
+
+###-------create other datasheet where we eliminate rare species---------
+
+#remove rare species
+```{r}
+seabird_dat_ch_2015_meta_REDUCED3<-
+  seabird_dat_ch_2015_meta %>%
+  filter(Scientific.name != "Phaethon.lepturus" )  %>%
+  filter(Scientific.name != "Sterna.dougallii") %>%
+  droplevels()
+
+levels(seabird_dat_ch_2015_meta_REDUCED3$Scientific.name)
+
+```
+
+
+##now do calculations with reduced data, plus add in isotope data
+```{r}
+
+seabird_dat_ch_2015_bio_STDO_and_PHLE_removed<-
+  seabird_dat_ch_2015_meta_REDUCED3 %>% 
+  mutate(Total_Biomass_kg = Num_Breeding_Pairs*2*weight_g/1000) %>% #divide by 1000 because g to kg
+  mutate(Biomass_Prop_Year_kg = Total_Biomass_kg*prop_year)%>% 
+  mutate(Biomass_Prop_Year_kg_ha= (Biomass_Prop_Year_kg)/island_size_ha)%>% 
+  mutate(Breeding_Pairs_Prop_Year = Num_Breeding_Pairs*prop_year)%>% 
+  mutate(Breeding_Pairs_Prop_Year_ha = Breeding_Pairs_Prop_Year/island_size_ha)%>% 
+  mutate(Breeding_Pairs_ha = Num_Breeding_Pairs/island_size_ha)%>% 
+  mutate(Biomass_kg_ha = Total_Biomass_kg/island_size_ha)%>% 
+  select(Region, Atoll, Island, rat_status,  island_size_ha, 
+         Family, Scientific.name, Num_Breeding_Pairs, 
+         Total_Biomass_kg, Biomass_Prop_Year_kg, Biomass_Prop_Year_kg_ha, 
+         Breeding_Pairs_Prop_Year,  Breeding_Pairs_Prop_Year_ha, 
+         Breeding_Pairs_ha, Biomass_kg_ha) 
+
+#round decimal places to 4
+seabird_dat_ch_2015_bio_STDO_and_PHLE_removed<-
+  seabird_dat_ch_2015_bio_STDO_and_PHLE_removed%>% 
+      mutate(Biomass_Prop_Year_kg = round(Biomass_Prop_Year_kg, 4)) %>%
+    mutate(Biomass_Prop_Year_kg_ha = round(Biomass_Prop_Year_kg_ha, 4)) %>%
+  mutate(Breeding_Pairs_Prop_Year = round(Breeding_Pairs_Prop_Year, 4)) %>%
+  mutate(Breeding_Pairs_Prop_Year_ha = round(Breeding_Pairs_Prop_Year_ha, 4))  %>%
+  mutate(Breeding_Pairs_ha = round(Breeding_Pairs_ha, 4)) %>%
+mutate(Biomass_kg_ha = round(Biomass_kg_ha, 4)) 
+
+seabird_dat_ch_2015_bio_STDO_and_PHLE_removed
+  
+```
+
+###sum by island
+```{r}
+
+###by island only
+seabird_dat_ch_2015_bio_STDO_and_PHLE_removed_isl<-
+  seabird_dat_ch_2015_bio_STDO_and_PHLE_removed %>% 
+  group_by(Island, rat_status) %>% 
+   summarize(sum_bio_total_kg = sum(Total_Biomass_kg),
+             sum_bio_prop_year_kg = sum(Biomass_Prop_Year_kg),
+            sum_bio_prop_year_kg_ha = sum(Biomass_Prop_Year_kg_ha),
+            sum_breeding_pairs = sum(Num_Breeding_Pairs),
+            sum_breeding_pairs_prop_year = sum(Breeding_Pairs_Prop_Year),
+            sum_breeding_pairs_prop_year_ha = sum(Breeding_Pairs_Prop_Year_ha),
+            sum_breeding_pairs_ha = sum(Breeding_Pairs_ha),
+            sum_biomass_kg_ha = sum(Biomass_kg_ha))
+
+##add row columns with island totals to species data:
+seabird_dat_ch_2015_bio_meta_R3<-left_join(seabird_dat_ch_2015_bio_STDO_and_PHLE_removed, seabird_dat_ch_2015_bio_STDO_and_PHLE_removed_isl, by = c("Island", "rat_status"))
+seabird_dat_ch_2015_bio_meta_R3
+
+```
+
+
+##make species data wide 
+```{r}
+#do biomass and breeding pairs together:
+ch_15_bio_wide_R3<-
+  seabird_dat_ch_2015_bio_meta_R3  %>% 
+  pivot_wider(id_cols =c("Atoll", "Island", "rat_status",  "island_size_ha",
+                         "sum_bio_prop_year_kg_ha"), 
+              names_from = "Scientific.name", values_from = c("Biomass_Prop_Year_kg_ha", "Breeding_Pairs_ha"))
+
+```
+
+
+##and now combine reduced data with isotope data:
+```{r}
+iso_bio_ch
+
+##combine:
+iso_bio_ch_R3<-inner_join(iso_dat_ch_rl, ch_15_bio_wide_R3,  by=c("Island")) 
+iso_bio_ch_R3
+
+```
+
+
+##finally, get diversity metrics and combine
+```{r}
+
+sb_types_R3<-
+  ch_15_bio_wide_R3%>% 
+  select(Biomass_Prop_Year_kg_ha_Ardenna.pacifica:Biomass_Prop_Year_kg_ha_Gygis.alba)
+
+ch_2015_div_R3<-
+  ch_15_bio_wide_R3%>% 
+  mutate(richness = specnumber(sb_types_R3)) %>% 
+  mutate(log_bio_kg_ha = log(sum_bio_prop_year_kg_ha),
+         log_rich = log(richness),
+         rich_cs = scale(richness, center = TRUE, scale = TRUE),
+         logbio_cs = scale(log_bio_kg_ha, center = TRUE, scale = TRUE),
+         logrich_cs = scale(log_rich, center = TRUE, scale = TRUE),
+         logbio_c = scale(log_bio_kg_ha, center = TRUE, scale = FALSE),
+         rich_c = scale(richness, center = TRUE, scale = FALSE))
+
+
+#combine data
+ch_iso_div_15_R3<- inner_join(iso_dat_ch_rl, ch_2015_div_R3, by = "Island")
+ch_iso_div_15_R3
+
+```
+
+###save as .rdata
+```{r}
+
+save(ch_2015_div_R3, ch_iso_div_15_R3,seabird_dat_ch_2015_bio_meta_R3,
+     file = "seabird_comm_data_REDUCED_2021_09_30.Rdata")
+```
+
+
+
+######------------combine seabird and vegetation data--------------------------
+
+
+##load data
+```{r}
+veg_dat<-read.csv("island_vegetation_dat.csv", stringsAsFactors = TRUE)
+
+levels(veg_dat$Island)
+levels(ch_2015_div$Island)
+
+levels(veg_dat$Atoll)
+levels(ch_2015_div$Atoll)
+
+ch_2015_bio_div_veg<-inner_join(veg_dat, ch_2015_div,  by=c("Atoll","Island")) 
+ch_2015_bio_div_veg
+str(ch_2015_bio_div_veg)
+
+#reduce to what we need:
+ch_2015_sb_veg<-
+  ch_2015_bio_div_veg%>% 
+  select(c(Island, Atoll, rat_status, island_size_ha, non.native_forest_percent,  sum_bio_prop_year_kg_ha, 
+           richness, log_bio_kg_ha))
+
+ch_2015_sb_veg_cs<-
+  ch_2015_sb_veg%>% 
+  mutate(nonative_forest_cs = scale(non.native_forest_percent, center = TRUE, scale = TRUE),
+         island_size_cs = scale(island_size_ha, center = TRUE, scale = TRUE),
+           rich_cs = scale(richness, center = TRUE, scale = TRUE))
+str(ch_2015_sb_veg_cs)
+
+#also combine with reduced data: 
+ch_2015_bio_div_veg_R3<-inner_join(select(ch_2015_sb_veg_cs, 
+                                          c("Atoll", "Island", "rat_status", "non.native_forest_percent",
+                                                             "nonative_forest_cs", 
+                                                            "island_size_cs")), 
+                                select(ch_2015_div_R3, "Atoll", "Island", "island_size_ha", "sum_bio_prop_year_kg_ha", "log_bio_kg_ha",   "logbio_cs", "logbio_c", "richness", "rich_cs", "rich_c", ), by=c("Atoll","Island")) 
+
+ch_2015_bio_div_veg_R3
+
+
+```
+
+
+#save veg data
+```{r}
+save(ch_2015_sb_veg, ch_2015_sb_veg_cs, 
+    ch_2015_bio_div_veg_R3,
+     file = "ch_2015_sb_veg_2021_09_30.Rdata")
+```
+
+
+
+###Check corrs between full data and reduced data:
+```{r}
+cor(ch_2015_sb_veg_cs$richness, ch_2015_bio_div_veg_R3$richness) #0.9603034
+cor(ch_2015_sb_veg_cs$log_bio_kg_ha, ch_2015_bio_div_veg_R3$log_bio_kg_ha) #0.9999565
+cor(ch_2015_sb_veg_cs$sum_bio_prop_year_kg_ha, ch_2015_bio_div_veg_R3$sum_bio_prop_year_kg_ha) #1
+###SUPER STRONG CORRS - so excluding rare species shouldn't affect results
+```
+
+
